@@ -18,14 +18,31 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          coverage: xdebug
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress
+
+      - name: Run tests with coverage
+        run: vendor/bin/phpunit --coverage-clover coverage/coverage.xml
+
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: >
             -Dsonar.projectKey=gondwana-booking
             -Dsonar.organization=lothartjipueja
             -Dsonar.sources=.
-            -Dsonar.branch.name=${{ github.ref_name }} 
+            -Dsonar.branch.name=${{ github.ref_name }}
+            -Dsonar.branch.target=main
+            -Dsonar.php.coverage.reportPaths=coverage/coverage.xml
+            -Dsonar.php.tests.reportPath=coverage/test-report.xml 

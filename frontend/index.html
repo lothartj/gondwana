@@ -3,46 +3,250 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gondwana Collection Booking</title>
+    <title>Gondwana Collection Namibia - Luxury Lodges & Activities</title>
     <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Gondwana Collection</h1>
-        </header>
-        <main>
-            <form id="bookingForm" onsubmit="submitForm(event)">
+    <!-- Navbar -->
+    <nav class="navbar">
+        <img src="../images/gondwanalogo.webp" alt="Gondwana Collection" class="navbar-logo">
+        <div class="navbar-links">
+            <a href="#">Explore</a>
+            <a href="#">Travel Offers</a>
+            <a href="#">News & Blog</a>
+            <a href="#">About Us</a>
+            <a href="#">Contact</a>
+            <a href="#" class="book-now-btn">Book Now</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Your Journey Begins Here</h1>
+            <p>Discover Namibia's most beautiful destinations with Gondwana Collection</p>
+        </div>
+    </section>
+
+    <!-- Search Form -->
+    <form id="searchForm" onsubmit="searchProperties(event)">
+        <div class="search-container">
+            <div class="search-grid">
                 <div class="form-group">
-                    <input type="text" id="unitName" name="unitName" required placeholder="Unit Name">
+                    <label for="arrival">Arrival Date</label>
+                    <input type="date" id="arrival" name="arrival" required>
                 </div>
                 <div class="form-group">
-                    <input type="text" id="arrival" name="arrival" required placeholder="Arrival Date (dd/mm/yyyy)" pattern="\d{2}/\d{2}/\d{4}">
+                    <label for="departure">Departure Date</label>
+                    <input type="date" id="departure" name="departure" required>
                 </div>
                 <div class="form-group">
-                    <input type="text" id="departure" name="departure" required placeholder="Departure Date (dd/mm/yyyy)" pattern="\d{2}/\d{2}/\d{4}">
+                    <label for="occupants">Guests</label>
+                    <input type="number" id="occupants" name="occupants" required placeholder="Number of guests" min="1">
                 </div>
                 <div class="form-group">
-                    <input type="number" id="occupants" name="occupants" required placeholder="Number of Occupants" min="1">
+                    <label for="ages">Guest Ages</label>
+                    <input type="text" id="ages" name="ages" required placeholder="e.g. 35,32,12,8">
                 </div>
-                <div class="form-group">
-                    <input type="text" id="ages" name="ages" required placeholder="Ages (comma-separated)">
+            </div>
+            <button type="submit" class="search-button">
+                <span class="button-text">Search Available Properties</span>
+                <div class="spinner"></div>
+            </button>
+        </div>
+    </form>
+
+    <!-- Properties Grid -->
+    <div id="properties" class="properties-grid"></div>
+
+    <!-- Booking Form Modal -->
+    <div id="bookingForm" class="booking-form hidden">
+        <div class="booking-form-content">
+            <div class="search-container">
+                <div class="search-grid">
+                    <div class="form-group">
+                        <label for="booking-arrival">Arrival Date</label>
+                        <input type="date" id="booking-arrival" name="arrival" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="booking-departure">Departure Date</label>
+                        <input type="date" id="booking-departure" name="departure" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="booking-occupants">Guests</label>
+                        <input type="number" id="booking-occupants" name="occupants" required placeholder="Number of guests" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="booking-ages">Guest Ages</label>
+                        <input type="text" id="booking-ages" name="ages" required placeholder="e.g. 35,32,12,8">
+                    </div>
                 </div>
-                <button type="submit">Check Availability</button>
-            </form>
-            <div id="result" class="result-container"></div>
-        </main>
+                <div class="booking-actions">
+                    <button type="submit">Confirm Booking</button>
+                    <button type="button" onclick="closeBookingForm()">Cancel</button>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>About Gondwana</h3>
+                <p>Experience the beauty of Namibia with Gondwana Collection's luxury lodges and activities. We offer unforgettable adventures in some of Africa's most stunning locations.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul class="footer-links">
+                    <li><a href="#">Our Lodges</a></li>
+                    <li><a href="#">Activities</a></li>
+                    <li><a href="#">Special Offers</a></li>
+                    <li><a href="#">Gift Vouchers</a></li>
+                    <li><a href="#">Photo Gallery</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contact Us</h3>
+                <ul class="footer-links">
+                    <li><a href="tel:+264612427375">+264 61 242 7375</a></li>
+                    <li><a href="mailto:info@gondwana-collection.com">info@gondwana-collection.com</a></li>
+                    <li>P.O. Box 80205</li>
+                    <li>Windhoek, Namibia</li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Follow Us</h3>
+                <p>Stay updated with our latest news and special offers.</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Gondwana Collection Namibia. All rights reserved.</p>
+        </div>
+    </footer>
+
     <script>
-        async function submitForm(event) {
+        // Set min date to today and max date to 1 year from now
+        const today = new Date();
+        const maxDate = new Date();
+        maxDate.setFullYear(today.getFullYear() + 1);
+
+        const arrivalInput = document.getElementById('arrival');
+        const departureInput = document.getElementById('departure');
+
+        // Format dates for the input
+        const formatDateForInput = (date) => {
+            return date.toISOString().split('T')[0];
+        };
+
+        // Set min and max dates
+        arrivalInput.min = formatDateForInput(today);
+        arrivalInput.max = formatDateForInput(maxDate);
+        departureInput.min = formatDateForInput(today);
+        departureInput.max = formatDateForInput(maxDate);
+
+        // Update departure min date when arrival is selected
+        arrivalInput.addEventListener('change', (e) => {
+            const selectedArrival = new Date(e.target.value);
+            departureInput.min = formatDateForInput(selectedArrival);
+            if (departureInput.value && new Date(departureInput.value) < selectedArrival) {
+                departureInput.value = e.target.value;
+            }
+        });
+
+        // Format date from YYYY-MM-DD to DD/MM/YYYY
+        function formatDateForAPI(dateStr) {
+            const [year, month, day] = dateStr.split('-');
+            return `${day}/${month}/${year}`;
+        }
+
+        async function searchProperties(event) {
             event.preventDefault();
             const form = event.target;
-            const formData = {
-                "Unit Name": form.unitName.value,
-                "Arrival": form.arrival.value,
-                "Departure": form.departure.value,
-                "Occupants": parseInt(form.occupants.value),
-                "Ages": form.ages.value.split(',').map(age => parseInt(age.trim()))
+            const button = form.querySelector('button[type="submit"]');
+            const searchData = {
+                arrival: formatDateForAPI(form.arrival.value),
+                departure: formatDateForAPI(form.departure.value),
+                occupants: parseInt(form.occupants.value),
+                ages: form.ages.value.split(',').map(age => parseInt(age.trim()))
+            };
+
+            try {
+                // Add loading state
+                button.classList.add('loading');
+                
+                const response = await fetch('../backend/api.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(searchData)
+                });
+                const data = await response.json();
+                if (data.success && data.properties) {
+                    displayProperties(data.properties);
+                } else {
+                    throw new Error(data.error || 'Failed to fetch properties');
+                }
+            } catch (error) {
+                document.getElementById('properties').innerHTML = `
+                    <div class="error">
+                        <p>${error.message || 'An error occurred. Please try again.'}</p>
+                    </div>
+                `;
+            } finally {
+                // Remove loading state
+                button.classList.remove('loading');
+            }
+        }
+
+        function displayProperties(properties) {
+            const propertiesDiv = document.getElementById('properties');
+            propertiesDiv.innerHTML = properties.map(property => `
+                <div class="property-card">
+                    <div class="property-image" style="background-image: url('${property.image_url}')"></div>
+                    <div class="property-details">
+                        <h3>${property.title}</h3>
+                        <div class="features">
+                            ${property.features.map(feature => `<span class="feature">${feature}</span>`).join('')}
+                        </div>
+                        <div class="price">
+                            <span class="amount">${property.price ? 'N$' + property.price : 'Price on request'}</span>
+                            <span class="description">${property.price_description}</span>
+                        </div>
+                        <button onclick="openBookingForm('${property.title}')" class="book-button">Book Now</button>
+                        <a href="${property.booking_url}" target="_blank" class="details-link">View Details</a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openBookingForm(propertyTitle) {
+            document.getElementById('selectedProperty').value = propertyTitle;
+            document.getElementById('bookingForm').classList.remove('hidden');
+        }
+
+        function closeBookingForm() {
+            document.getElementById('bookingForm').classList.add('hidden');
+        }
+
+        async function submitBooking(event) {
+            event.preventDefault();
+            const searchForm = document.getElementById('searchForm');
+            const bookingData = {
+                "Unit Name": document.getElementById('selectedProperty').value,
+                "Arrival": formatDateForAPI(searchForm.arrival.value),
+                "Departure": formatDateForAPI(searchForm.departure.value),
+                "Occupants": parseInt(searchForm.occupants.value),
+                "Ages": searchForm.ages.value.split(',').map(age => parseInt(age.trim()))
             };
 
             try {
@@ -51,26 +255,14 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify(bookingData)
                 });
                 const data = await response.json();
-                displayResult(data);
+                closeBookingForm();
+                alert('Booking submitted successfully!');
             } catch (error) {
-                document.getElementById('result').innerHTML = '<div class="error">An error occurred. Please try again.</div>';
+                alert('An error occurred while submitting the booking. Please try again.');
             }
-        }
-
-        function displayResult(data) {
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = `
-                <div class="result-item">
-                    <h3>Booking Details</h3>
-                    <p><strong>Unit Name:</strong> ${data.unitName}</p>
-                    <p><strong>Rate:</strong> ${data.rate}</p>
-                    <p><strong>Date Range:</strong> ${data.dateRange}</p>
-                    <p><strong>Availability:</strong> ${data.availability}</p>
-                </div>
-            `;
         }
     </script>
 </body>

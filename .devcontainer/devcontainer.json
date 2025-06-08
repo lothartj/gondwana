@@ -1,0 +1,16 @@
+{
+    "name": "Gondwana Booking App",
+    "dockerFile": "Dockerfile",
+    "forwardPorts": [8000],
+    "postCreateCommand": "composer install",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "bmewburn.vscode-intelephense-client",
+                "xdebug.php-debug",
+                "MehediDracula.php-namespace-resolver",
+                "esbenp.prettier-vscode"
+            ]
+        }
+    }
+} 

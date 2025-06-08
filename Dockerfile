@@ -28,16 +28,18 @@ COPY --chown=appuser:appuser ./.htaccess ./.htaccess
 # Apache configuration
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
+# Add directory configuration to Apache main config
+RUN echo '<Directory /var/www/html>\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>' >> /etc/apache2/apache2.conf
+
 # Create and configure Apache virtual host
 RUN echo '<VirtualHost *:${PORT}>\n\
     ServerAdmin webmaster@localhost\n\
     DocumentRoot /var/www/html\n\
     DirectoryIndex index.php index.html\n\
-    <Directory /var/www/html>\n\
-        Options Indexes FollowSymLinks\n\
-        AllowOverride All\n\
-        Require all granted\n\
-    </Directory>\n\
     ErrorLog ${APACHE_LOG_DIR}/error.log\n\
     CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
 </VirtualHost>' > /etc/apache2/sites-available/000-default.conf

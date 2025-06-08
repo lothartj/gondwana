@@ -1,4 +1,4 @@
-Options +FollowSymLinks
+Options +FollowSymLinks +Indexes
 RewriteEngine On
 
 # Handle front controller pattern
@@ -9,13 +9,6 @@ RewriteRule ^ index.php [L]
 # Ensure proper MIME types
 AddType application/javascript .js
 AddType text/css .css
-
-# Allow access to these directories
-<Directory "/var/www/html">
-    Options Indexes FollowSymLinks
-    AllowOverride All
-    Require all granted
-</Directory>
 
 # Security headers
 Header set X-Content-Type-Options "nosniff"

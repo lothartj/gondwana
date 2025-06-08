@@ -8,10 +8,9 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  analysis:
-    name: SonarCloud Analysis
+  sonarcloud:
+    name: SonarCloud
     runs-on: ubuntu-latest
-    
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,21 +26,13 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
 
-      - name: Run PHP CodeSniffer
-        run: |
-          phpcs --standard=PSR12 backend tests || true
-
       - name: Run tests with coverage
         run: |
           mkdir -p coverage
           XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-clover coverage/coverage.xml --log-junit coverage/test-report.xml
 
-      - name: Fix file permissions
-        run: |
-          chmod -R 777 coverage
-
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v4
+        uses: SonarSource/sonarcloud-github-action@master
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} 

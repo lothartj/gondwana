@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gondwana Collection Booking</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Gondwana Collection</h1>
+        </header>
+        <main>
+            <form id="bookingForm" onsubmit="submitForm(event)">
+                <div class="form-group">
+                    <input type="text" id="unitName" name="unitName" required placeholder="Unit Name">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="arrival" name="arrival" required placeholder="Arrival Date (dd/mm/yyyy)" pattern="\d{2}/\d{2}/\d{4}">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="departure" name="departure" required placeholder="Departure Date (dd/mm/yyyy)" pattern="\d{2}/\d{2}/\d{4}">
+                </div>
+                <div class="form-group">
+                    <input type="number" id="occupants" name="occupants" required placeholder="Number of Occupants" min="1">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="ages" name="ages" required placeholder="Ages (comma-separated)">
+                </div>
+                <button type="submit">Check Availability</button>
+            </form>
+            <div id="result" class="result-container"></div>
+        </main>
+    </div>
+    <script>
+        async function submitForm(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = {
+                "Unit Name": form.unitName.value,
+                "Arrival": form.arrival.value,
+                "Departure": form.departure.value,
+                "Occupants": parseInt(form.occupants.value),
+                "Ages": form.ages.value.split(',').map(age => parseInt(age.trim()))
+            };
+
+            try {
+                const response = await fetch('../backend/api.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                const data = await response.json();
+                displayResult(data);
+            } catch (error) {
+                document.getElementById('result').innerHTML = '<div class="error">An error occurred. Please try again.</div>';
+            }
+        }
+
+        function displayResult(data) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <div class="result-item">
+                    <h3>Booking Details</h3>
+                    <p><strong>Unit Name:</strong> ${data.unitName}</p>
+                    <p><strong>Rate:</strong> ${data.rate}</p>
+                    <p><strong>Date Range:</strong> ${data.dateRange}</p>
+                    <p><strong>Availability:</strong> ${data.availability}</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html> 

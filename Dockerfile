@@ -15,14 +15,14 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Set environment variables
-# ENV GONDWANA_API_URL="https://dev.gondwana-collection.com/Web-Store/Rates/Rates.php"
-# ENV GONDWANA_ORIGIN="https://gondwana.onrender.com"
-# ENV GONDWANA_REFERER="https://gondwana.onrender.com/frontend/index.html"
+ENV GONDWANA_API_URL="https://dev.gondwana-collection.com/Web-Store/Rates/Rates.php"
+ENV GONDWANA_ORIGIN="https://gondwana.onrender.com"
+ENV GONDWANA_REFERER="https://gondwana.onrender.com/frontend/index.html"
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy all necessary files with appropriate permissions
+# Copy files with read-only permissions
 COPY --chown=appuser:appuser ./backend ./backend/
 COPY --chown=appuser:appuser ./frontend ./frontend/
 COPY --chown=appuser:appuser ./images ./images/
@@ -30,12 +30,17 @@ COPY --chown=appuser:appuser ./.env.example ./.env
 COPY --chown=appuser:appuser ./index.php ./index.php
 COPY --chown=appuser:appuser ./.htaccess ./.htaccess
 
+# Set strict read-only permissions for all copied files
+RUN find /var/www/html -type f -exec chmod 444 {} \; \
+    && find /var/www/html -type d -exec chmod 555 {} \; \
+    && chmod 400 /var/www/html/.env
+
 # Apache configuration
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 # Add directory configuration to Apache main config
 RUN echo '<Directory /var/www/html>\n\
-    Options Indexes FollowSymLinks\n\
+    Options -Indexes +FollowSymLinks\n\
     AllowOverride All\n\
     Require all granted\n\
 </Directory>' >> /etc/apache2/apache2.conf
@@ -51,15 +56,10 @@ RUN echo '<VirtualHost *:${PORT}>\n\
 
 RUN sed -i 's/80/${PORT}/g' /etc/apache2/ports.conf /etc/apache2/sites-available/*.conf
 
-# Set permissions
-RUN chown -R appuser:appuser /var/www/html \
-    && find /var/www/html -type f -exec chmod 644 {} + \
-    && find /var/www/html -type d -exec chmod 755 {} + \
-    && chmod 640 /var/www/html/.env
-
-# Make sure Apache can write to the necessary directories
+# Create necessary Apache directories with minimal permissions
 RUN mkdir -p /var/run/apache2 /var/lock/apache2 /var/log/apache2 \
-    && chown -R appuser:appuser /var/run/apache2 /var/lock/apache2 /var/log/apache2
+    && chown -R appuser:appuser /var/run/apache2 /var/lock/apache2 /var/log/apache2 \
+    && chmod 755 /var/run/apache2 /var/lock/apache2 /var/log/apache2
 
 # Configure Apache to run as appuser
 RUN sed -i 's/www-data/appuser/g' /etc/apache2/envvars

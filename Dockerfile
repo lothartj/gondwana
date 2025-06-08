@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy only necessary files, excluding sensitive data
+# Copy only necessary files with read-only permissions
 COPY --chown=appuser:appuser ./backend ./backend/
 COPY --chown=appuser:appuser ./frontend ./frontend/
 COPY --chown=appuser:appuser ./images ./images/
@@ -26,9 +26,14 @@ COPY --chown=appuser:appuser ./.env.example ./.env
 # Apache configuration
 RUN sed -i 's/80/${PORT}/g' /etc/apache2/ports.conf /etc/apache2/sites-available/*.conf
 
-# Set permissions
+# Set strict permissions
 RUN chown -R appuser:appuser /var/www/html \
-    && chmod -R 755 /var/www/html
+    && find /var/www/html -type f -exec chmod 444 {} + \
+    && find /var/www/html -type d -exec chmod 555 {} + \
+    && chmod 400 /var/www/html/.env
+
+# Configure Apache to run as appuser
+RUN sed -i 's/www-data/appuser/g' /etc/apache2/envvars
 
 # Switch to non-root user
 USER appuser

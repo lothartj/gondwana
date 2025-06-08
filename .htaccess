@@ -1,0 +1,23 @@
+Options +FollowSymLinks
+RewriteEngine On
+
+# Handle front controller pattern
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [L]
+
+# Ensure proper MIME types
+AddType application/javascript .js
+AddType text/css .css
+
+# Allow access to these directories
+<Directory "/var/www/html">
+    Options Indexes FollowSymLinks
+    AllowOverride All
+    Require all granted
+</Directory>
+
+# Security headers
+Header set X-Content-Type-Options "nosniff"
+Header set X-Frame-Options "SAMEORIGIN"
+Header set X-XSS-Protection "1; mode=block" 

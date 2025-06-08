@@ -50,22 +50,6 @@ if (!empty($missingFields)) {
     exit;
 }
 
-// Convert dates from DD/MM/YYYY to YYYY-MM-DD
-function convertDate($date) {
-    if (strpos($date, '/') !== false) {
-        // Handle DD/MM/YYYY format
-        $parts = explode('/', $date);
-        if (count($parts) !== 3) {
-            throw new Exception("Invalid date format: $date");
-        }
-        return sprintf('%s-%s-%s', $parts[2], $parts[1], $parts[0]);
-    } else if (strpos($date, '-') !== false) {
-        // Already in YYYY-MM-DD format
-        return $date;
-    }
-    throw new Exception("Unsupported date format: $date");
-}
-
 function makeApiCall($url, $data = null, $sessionCookie = '') {
     $ch = curl_init($url);
     

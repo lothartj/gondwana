@@ -10,6 +10,7 @@ class ApiTest extends TestCase
     {
         // Suppress header modification warnings during tests
         @ob_start();
+        require_once __DIR__ . '/../backend/config.php';
         require_once __DIR__ . '/../backend/helpers.php';
     }
 

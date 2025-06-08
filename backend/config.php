@@ -14,15 +14,16 @@ define('MIN_AGE_ADULT', 12);
 // Time zone
 date_default_timezone_set('Africa/Windhoek');
 
-// CORS Configuration
-$allowedOrigins = [
-    'http://localhost:8000',
-    'http://127.0.0.1:8000'
-];
-
+/**
+ * Get allowed origins based on environment
+ */
 function getAllowedOrigins() {
-    global $allowedOrigins;
-    return $allowedOrigins;
+    $origins = [
+        'https://gondwana-collection.com',  // Production
+        'http://localhost:8000',            // Development
+        'http://127.0.0.1:8000'            // Development
+    ];
+    return $origins;
 }
 
 // Load environment variables if .env file exists

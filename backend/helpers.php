@@ -48,20 +48,4 @@ function validateBookingInput($input) {
     }
     
     return true;
-}
-
-/**
- * Get allowed origins based on environment
- */
-function getAllowedOrigins() {
-    $origins = ['https://gondwana-collection.com'];
-    
-    if (getenv('APP_ENV') === 'development') {
-        $origins = array_merge($origins, [
-            'http://localhost:8000',
-            'http://127.0.0.1:8000'
-        ]);
-    }
-    
-    return $origins;
 } 

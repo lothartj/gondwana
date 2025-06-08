@@ -29,7 +29,7 @@ jobs:
       - name: Run tests with coverage
         run: |
           mkdir -p coverage
-          XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-clover coverage/coverage.xml --log-junit coverage/test-report.xml
+          XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-clover coverage/coverage.xml
 
       - name: Fix file permissions
         run: |
@@ -44,8 +44,6 @@ jobs:
             -Dsonar.organization=lothartj
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.php.coverage.reportPaths=coverage/coverage.xml
-            -Dsonar.php.tests.reportPath=coverage/test-report.xml
-            -Dsonar.qualitygate.wait=false
             -Dsonar.verbose=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

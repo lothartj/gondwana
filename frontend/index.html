@@ -37,7 +37,7 @@
                 <div class="form-group">
                     <label for="unit">Property</label>
                     <div class="select-wrapper">
-                        <select id="unit" name="unit" required>
+                        <select id="unit" name="unit">
                             <option value="" disabled selected>Select a property</option>
                             <option value="Okapuka Safari Lodge">Okapuka Safari Lodge</option>
                             <option value="The Weinberg">The Weinberg</option>
@@ -61,10 +61,16 @@
                     <input type="text" id="ages" name="ages" required placeholder="e.g. 35,32,12,8">
                 </div>
             </div>
-            <button type="submit" class="search-button">
-                <span class="button-text">Search Available Properties</span>
-                <div class="spinner"></div>
-            </button>
+            <div class="search-buttons">
+                <button type="button" class="search-button" data-search-type="available">
+                    <span class="button-text">Search Available Properties</span>
+                    <div class="spinner"></div>
+                </button>
+                <button type="button" class="search-button search-button-secondary" data-search-type="all">
+                    <span class="button-text">Search All Properties</span>
+                    <div class="spinner"></div>
+                </button>
+            </div>
         </div>
     </form>
 
@@ -143,6 +149,181 @@
         </div>
     </footer>
 
+    <style>
+    .search-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 1rem;
+    }
+
+    .search-button {
+        background-color: #2c5282;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.375rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+        min-width: 200px;
+    }
+
+    .search-button:hover {
+        background-color: #2a4365;
+    }
+
+    .search-button-secondary {
+        background-color: #4a5568;
+    }
+
+    .search-button-secondary:hover {
+        background-color: #2d3748;
+    }
+
+    .search-button.loading {
+        color: transparent;
+    }
+
+    .spinner {
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: translate(-50%, -50%) rotate(360deg);
+        }
+    }
+
+    .properties-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+        padding: 2rem;
+    }
+
+    .property-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: transform 0.2s;
+    }
+
+    .property-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .property-image {
+        height: 200px;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+
+    .property-details {
+        padding: 1.5rem;
+    }
+
+    .property-details h3 {
+        margin: 0 0 1rem;
+        font-size: 1.25rem;
+        color: #2d3748;
+    }
+
+    .features {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .feature {
+        background: #e2e8f0;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        color: #4a5568;
+    }
+
+    .price {
+        margin: 1rem 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #2c5282;
+    }
+
+    .property-location {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #718096;
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+    }
+
+    .view-button {
+        width: 100%;
+        background: #2c5282;
+        color: white;
+        border: none;
+        padding: 0.75rem;
+        border-radius: 0.375rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .view-button:hover {
+        background: #2a4365;
+    }
+
+    .error-message {
+        text-align: center;
+        padding: 2rem;
+        background: #fff5f5;
+        border-radius: 8px;
+        margin: 2rem;
+    }
+
+    .error-message h3 {
+        color: #c53030;
+        margin-bottom: 1rem;
+    }
+
+    .error-message p {
+        color: #742a2a;
+    }
+
+    .debug-info {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f7fafc;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        text-align: left;
+    }
+
+    .debug-info pre {
+        background: #edf2f7;
+        padding: 0.5rem;
+        border-radius: 4px;
+        overflow-x: auto;
+    }
+    </style>
+
     <script>
         // Unit Type mapping as per assignment
         const unitTypes = {
@@ -184,79 +365,136 @@
             return `${day}/${month}/${year}`;
         }
 
-        async function searchProperties(event) {
+        // Add event listeners to buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.search-button').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    searchProperties(e, this.dataset.searchType);
+                });
+            });
+        });
+
+        async function searchProperties(event, searchType) {
             event.preventDefault();
-            const form = event.target;
-            const button = form.querySelector('button[type="submit"]');
+            const form = document.getElementById('searchForm');
+            const button = event.target.closest('.search-button');
             
-            // Get ages array from comma-separated string
-            const ages = form.ages.value.split(',')
-                .map(age => parseInt(age.trim()))
-                .filter(age => !isNaN(age));
-            
-            // Validate ages match occupants
-            if (ages.length !== parseInt(form.occupants.value)) {
-                alert('Number of ages must match number of occupants');
-                return;
-            }
-
-            const searchData = {
-                "Unit Name": form.unit.value,
-                "Arrival": formatDateForAPI(form.arrival.value),
-                "Departure": formatDateForAPI(form.departure.value),
-                "Occupants": parseInt(form.occupants.value),
-                "Ages": ages
-            };
-
             try {
                 // Add loading state
                 button.classList.add('loading');
+                button.querySelector('.spinner').style.display = 'block';
                 
-                const response = await fetch('../backend/api.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(searchData)
-                });
+                let response;
+                if (searchType === 'available') {
+                    // Get ages array from comma-separated string
+                    const ages = form.ages.value.split(',')
+                        .map(age => parseInt(age.trim()))
+                        .filter(age => !isNaN(age));
+                    
+                    // Validate ages match occupants
+                    if (ages.length !== parseInt(form.occupants.value)) {
+                        throw new Error('Number of ages must match number of occupants');
+                    }
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    // Check if property is selected for available search
+                    if (!form.unit.value) {
+                        throw new Error('Please select a property to check availability');
+                    }
+
+                    const apiData = {
+                        "Property": form.unit.value,
+                        "UnitTypeID": unitTypes[form.unit.value],
+                        "Arrival": form.arrival.value.split('-').reverse().join('/'),
+                        "Departure": form.departure.value.split('-').reverse().join('/'),
+                        "Guests": ages.map(age => ({
+                            "AgeGroup": age >= 12 ? "Adult" : "Child"
+                        }))
+                    };
+
+                    response = await fetch('../backend/api.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(apiData)
+                    });
+                } else {
+                    // For "Search All Properties", use GET request
+                    console.log('Making GET request to search_all.php...');
+                    response = await fetch('../backend/search_all.php', {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
                 }
 
-                const data = await response.json();
-                
+                const responseText = await response.text();
+                console.log('Raw API Response:', responseText);
+
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('JSON Parse Error:', parseError);
+                    throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}...`);
+                }
+
+                // Log debug information if available
+                if (data.debug) {
+                    console.log('API Debug Info:', data.debug);
+                }
+
                 if (!data.success) {
-                    throw new Error(data.error || 'Failed to fetch rates');
+                    const errorDetails = data.details || data.error || 'API request failed';
+                    const debugInfo = data.debug_info ? JSON.stringify(data.debug_info, null, 2) : '';
+                    const responseStructure = data.response_structure ? JSON.stringify(data.response_structure, null, 2) : '';
+                    
+                    throw new Error(`${errorDetails}\n\nDebug Info: ${debugInfo}\n\nResponse Structure: ${responseStructure}`);
                 }
 
-                displayProperties([{
-                    title: data.data.unitName,
-                    rate: data.data.rate,
-                    availability: data.data.availability,
-                    dateRange: data.data.dateRange,
-                    features: [
-                        `${data.data.occupants} guests`,
-                        ...data.data.guests.map(g => g),
-                        `Unit Type ID: ${unitTypes[data.data.unitName]}`
-                    ],
-                    image_url: data.data.unitName === 'Okapuka Safari Lodge' 
-                        ? '../images/okapuka.jpg' 
-                        : '../images/weinberg.jpg'
-                }]);
+                // Display properties based on search type
+                if (searchType === 'available') {
+                    displayAvailableProperties([{
+                        title: form.unit.value,
+                        rate: data.data.Rate || data.data.rate || 'Price on request',
+                        availability: data.data.Available || data.data.available ? 'Available' : 'Unavailable',
+                        dateRange: {
+                            arrival: form.arrival.value,
+                            departure: form.departure.value
+                        },
+                        features: [
+                            `${form.occupants.value} guests`,
+                            ...ages.map(age => `${age} years old`),
+                            `Unit Type ID: ${unitTypes[form.unit.value]}`
+                        ],
+                        image_url: form.unit.value === 'Okapuka Safari Lodge' 
+                            ? './images/okapuka.jpg' 
+                            : './images/weinberg.jpg'
+                    }]);
+                } else {
+                    displayAllProperties(data.data);
+                }
             } catch (error) {
+                console.error('API Error:', error);
                 document.getElementById('properties').innerHTML = `
-                    <div class="error">
-                        <p>${error.message || 'An error occurred. Please try again.'}</p>
+                    <div class="error-message">
+                        <h3>Oops! Something went wrong</h3>
+                        <p>Error details: ${error.message}</p>
+                        <div class="debug-info">
+                            <h4>Debug Information:</h4>
+                            <pre>${error.message}</pre>
+                        </div>
                     </div>
                 `;
             } finally {
                 button.classList.remove('loading');
+                button.querySelector('.spinner').style.display = 'none';
             }
         }
 
-        function displayProperties(properties) {
+        function displayAvailableProperties(properties) {
             const propertiesDiv = document.getElementById('properties');
             propertiesDiv.innerHTML = properties.map(property => `
                 <div class="property-card">
@@ -284,6 +522,58 @@
                     </div>
                 </div>
             `).join('');
+        }
+
+        function displayAllProperties(data) {
+            const propertiesDiv = document.getElementById('properties');
+            
+            if (!data || !data.properties || data.properties.length === 0) {
+                propertiesDiv.innerHTML = `
+                    <div class="error-message">
+                        <h3>No properties found</h3>
+                        <p>Please try adjusting your search criteria.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            propertiesDiv.innerHTML = `
+                <div class="properties-grid">
+                    ${data.properties.map(property => `
+                        <div class="property-card">
+                            <div class="property-image" style="background-image: url('${property.image_url || './images/placeholder.jpg'}')"></div>
+                            <div class="property-details">
+                                <h3>${property.title}</h3>
+                                <div class="features">
+                                    ${property.features.filter(feature => feature).map(feature => 
+                                        `<span class="feature">${feature}</span>`
+                                    ).join('')}
+                                </div>
+                                <div class="price">
+                                    <span class="amount">${property.price}</span>
+                                </div>
+                                <div class="property-location">
+                                    <i class="fas fa-map-marker-alt"></i> ${property.location || 'Location not specified'}
+                                </div>
+                                ${property.booking_url ? 
+                                    `<a href="${property.booking_url}" class="view-button" target="_blank">
+                                        Book Now
+                                    </a>` :
+                                    `<button onclick="viewProperty('${property.locationId}')" class="view-button">
+                                        View Details
+                                    </button>`
+                                }
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function viewProperty(propertyId) {
+            // Handle property detail view
+            console.log('Viewing property:', propertyId);
+            // You can implement a modal or redirect to a detail page
         }
 
         function openBookingForm(propertyTitle) {

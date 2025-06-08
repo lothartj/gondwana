@@ -35,11 +35,21 @@
         <div class="search-container">
             <div class="search-grid">
                 <div class="form-group">
-                    <label for="arrival">Arrival Date</label>
+                    <label for="unit">Property</label>
+                    <div class="select-wrapper">
+                        <select id="unit" name="unit" required>
+                            <option value="" disabled selected>Select a property</option>
+                            <option value="Okapuka Safari Lodge">Okapuka Safari Lodge</option>
+                            <option value="The Weinberg">The Weinberg</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="arrival">Check In</label>
                     <input type="date" id="arrival" name="arrival" required>
                 </div>
                 <div class="form-group">
-                    <label for="departure">Departure Date</label>
+                    <label for="departure">Check Out</label>
                     <input type="date" id="departure" name="departure" required>
                 </div>
                 <div class="form-group">
@@ -47,7 +57,7 @@
                     <input type="number" id="occupants" name="occupants" required placeholder="Number of guests" min="1">
                 </div>
                 <div class="form-group">
-                    <label for="ages">Guest Ages</label>
+                    <label for="ages">Ages</label>
                     <input type="text" id="ages" name="ages" required placeholder="e.g. 35,32,12,8">
                 </div>
             </div>
@@ -67,11 +77,11 @@
             <div class="search-container">
                 <div class="search-grid">
                     <div class="form-group">
-                        <label for="booking-arrival">Arrival Date</label>
+                        <label for="booking-arrival">Check In</label>
                         <input type="date" id="booking-arrival" name="arrival" required>
                     </div>
                     <div class="form-group">
-                        <label for="booking-departure">Departure Date</label>
+                        <label for="booking-departure">Check Out</label>
                         <input type="date" id="booking-departure" name="departure" required>
                     </div>
                     <div class="form-group">
@@ -79,7 +89,7 @@
                         <input type="number" id="booking-occupants" name="occupants" required placeholder="Number of guests" min="1">
                     </div>
                     <div class="form-group">
-                        <label for="booking-ages">Guest Ages</label>
+                        <label for="booking-ages">Ages</label>
                         <input type="text" id="booking-ages" name="ages" required placeholder="e.g. 35,32,12,8">
                     </div>
                 </div>
@@ -134,6 +144,12 @@
     </footer>
 
     <script>
+        // Unit Type mapping as per assignment
+        const unitTypes = {
+            'Okapuka Safari Lodge': -2147483637,
+            'The Weinberg': -2147483456
+        };
+
         // Set min date to today and max date to 1 year from now
         const today = new Date();
         const maxDate = new Date();
@@ -172,11 +188,24 @@
             event.preventDefault();
             const form = event.target;
             const button = form.querySelector('button[type="submit"]');
+            
+            // Get ages array from comma-separated string
+            const ages = form.ages.value.split(',')
+                .map(age => parseInt(age.trim()))
+                .filter(age => !isNaN(age));
+            
+            // Validate ages match occupants
+            if (ages.length !== parseInt(form.occupants.value)) {
+                alert('Number of ages must match number of occupants');
+                return;
+            }
+
             const searchData = {
-                arrival: formatDateForAPI(form.arrival.value),
-                departure: formatDateForAPI(form.departure.value),
-                occupants: parseInt(form.occupants.value),
-                ages: form.ages.value.split(',').map(age => parseInt(age.trim()))
+                "Unit Name": form.unit.value,
+                "Arrival": formatDateForAPI(form.arrival.value),
+                "Departure": formatDateForAPI(form.departure.value),
+                "Occupants": parseInt(form.occupants.value),
+                "Ages": ages
             };
 
             try {
@@ -186,16 +215,36 @@
                 const response = await fetch('../backend/api.php', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify(searchData)
                 });
-                const data = await response.json();
-                if (data.success && data.properties) {
-                    displayProperties(data.properties);
-                } else {
-                    throw new Error(data.error || 'Failed to fetch properties');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
+
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to fetch rates');
+                }
+
+                displayProperties([{
+                    title: data.data.unitName,
+                    rate: data.data.rate,
+                    availability: data.data.availability,
+                    dateRange: data.data.dateRange,
+                    features: [
+                        `${data.data.occupants} guests`,
+                        ...data.data.guests.map(g => g),
+                        `Unit Type ID: ${unitTypes[data.data.unitName]}`
+                    ],
+                    image_url: data.data.unitName === 'Okapuka Safari Lodge' 
+                        ? '../images/okapuka.jpg' 
+                        : '../images/weinberg.jpg'
+                }]);
             } catch (error) {
                 document.getElementById('properties').innerHTML = `
                     <div class="error">
@@ -203,7 +252,6 @@
                     </div>
                 `;
             } finally {
-                // Remove loading state
                 button.classList.remove('loading');
             }
         }
@@ -219,11 +267,20 @@
                             ${property.features.map(feature => `<span class="feature">${feature}</span>`).join('')}
                         </div>
                         <div class="price">
-                            <span class="amount">${property.price ? 'N$' + property.price : 'Price on request'}</span>
-                            <span class="description">${property.price_description}</span>
+                            <span class="amount">${property.rate ? 'N$' + property.rate : 'Price on request'}</span>
                         </div>
-                        <button onclick="openBookingForm('${property.title}')" class="book-button">Book Now</button>
-                        <a href="${property.booking_url}" target="_blank" class="details-link">View Details</a>
+                        <div class="availability">
+                            <span class="status ${property.availability === 'Available' ? 'available' : 'unavailable'}">
+                                ${property.availability}
+                            </span>
+                        </div>
+                        <div class="date-range">
+                            <p>From: ${property.dateRange.arrival}</p>
+                            <p>To: ${property.dateRange.departure}</p>
+                        </div>
+                        <button onclick="openBookingForm('${property.title}')" class="book-button" ${property.availability !== 'Available' ? 'disabled' : ''}>
+                            Book Now
+                        </button>
                     </div>
                 </div>
             `).join('');

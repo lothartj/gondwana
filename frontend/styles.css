@@ -115,7 +115,7 @@ body {
 /* Search Form */
 .search-container {
     position: relative;
-    max-width: 1000px;
+    max-width: 1200px;
     margin: -50px auto 4rem;
     background: white;
     padding: 2rem;
@@ -125,13 +125,15 @@ body {
 }
 
 .search-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    margin-bottom: 1.5rem;
 }
 
 .form-group {
-    margin-bottom: 0;
+    flex: 1;
+    min-width: 0; /* Prevents flex items from overflowing */
 }
 
 label {
@@ -144,7 +146,7 @@ label {
     letter-spacing: 1px;
 }
 
-input {
+input, select {
     width: 100%;
     padding: 0.8rem;
     border: 1px solid var(--border-color);
@@ -152,17 +154,53 @@ input {
     font-size: 1rem;
     transition: all 0.3s ease;
     background: #f8f9fa;
+    color: var(--primary-color);
+    font-family: inherit;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
 }
 
-input:focus {
+/* Custom select styling */
+.select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.select-wrapper::after {
+    content: '▼';
+    font-size: 0.8rem;
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--secondary-color);
+    pointer-events: none;
+}
+
+select {
+    cursor: pointer;
+    padding-right: 2.5rem;
+}
+
+/* Hover and focus states */
+input:hover, select:hover {
+    border-color: var(--secondary-color);
+}
+
+input:focus, select:focus {
     outline: none;
     border-color: var(--secondary-color);
     box-shadow: 0 0 0 3px rgba(196, 148, 76, 0.1);
 }
 
-button {
-    width: 100%;
-    padding: 1rem;
+/* Search button */
+.search-button {
+    width: auto;
+    min-width: 200px;
+    margin: 0 auto;
+    display: block;
+    padding: 1rem 2rem;
     background-color: var(--secondary-color);
     color: white;
     border: none;
@@ -174,7 +212,7 @@ button {
     overflow: hidden;
 }
 
-button:hover {
+.search-button:hover {
     background-color: #b38544;
     transform: translateY(-1px);
 }
@@ -321,14 +359,22 @@ button.loading .spinner {
     display: block;
 }
 
-/* Responsive Design */
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .search-container {
+        margin: -30px 1rem 4rem;
+        padding: 1.5rem;
+    }
+}
+
 @media (max-width: 1024px) {
     .search-grid {
-        grid-template-columns: repeat(2, 1fr);
+        flex-wrap: wrap;
+        gap: 1rem;
     }
-    
-    .hero h1 {
-        font-size: 2.5rem;
+
+    .form-group {
+        flex: 1 1 calc(50% - 0.5rem);
     }
 }
 
@@ -342,7 +388,15 @@ button.loading .spinner {
     }
     
     .search-grid {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+    }
+    
+    .form-group {
+        flex: 1 1 100%;
+    }
+    
+    .search-button {
+        width: 100%;
     }
     
     .properties-grid {
@@ -493,4 +547,44 @@ button.loading .spinner {
     .booking-actions {
         grid-template-columns: 1fr;
     }
+}
+
+.availability {
+    margin: 1rem 0;
+    text-align: center;
+}
+
+.status {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.status.available {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.status.unavailable {
+    background-color: #f44336;
+    color: white;
+}
+
+.date-range {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.date-range p {
+    margin: 0.3rem 0;
+    color: var(--primary-color);
+}
+
+button[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
 } 

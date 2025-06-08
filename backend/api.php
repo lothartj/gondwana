@@ -12,7 +12,7 @@ $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
 if (in_array($origin, $allowedOrigins)) {
     header('Access-Control-Allow-Origin: ' . $origin);
     header('Access-Control-Allow-Methods: POST');
-    header('Access-Control-Allow-Headers: Content-Type');
+    header('Access-Control-Allow-Headers: Content-Type, Accept');
     header('Access-Control-Max-Age: 86400'); // 24 hours cache
 }
 
@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Only accept POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
+    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
     exit();
 }
 
@@ -36,14 +36,14 @@ $data = json_decode($json, true);
 // Validate input
 if (!$data || !validateInput($data)) {
     http_response_code(400);
-    echo json_encode(['error' => 'Invalid input']);
+    echo json_encode(['success' => false, 'error' => 'Invalid input']);
     exit();
 }
 
-// Unit Type ID mapping (you should expand this based on your needs)
+// Unit Type ID mapping as per assignment
 $unitTypeMapping = [
-    'Test Unit 1' => -2147483637,
-    'Test Unit 2' => -2147483456
+    'Okapuka Safari Lodge' => -2147483637,
+    'The Weinberg' => -2147483456
 ];
 
 // Convert date format from dd/mm/yyyy to yyyy-mm-dd
@@ -70,17 +70,21 @@ function validateInput($data) {
 
 try {
     // Transform the payload
-    $unitTypeId = $unitTypeMapping[$data['Unit Name']] ?? -2147483637; // Default to first test ID if not found
+    $unitTypeId = $unitTypeMapping[$data['Unit Name']] ?? null;
     
-    // Convert dates
+    if ($unitTypeId === null) {
+        throw new Exception('Invalid Unit Name');
+    }
+    
+    // Convert dates from dd/mm/yyyy to yyyy-mm-dd
     $arrival = convertDate($data['Arrival']);
     $departure = convertDate($data['Departure']);
     
     if (!$arrival || !$departure) {
-        throw new Exception('Invalid date format');
+        throw new Exception('Invalid date format. Expected dd/mm/yyyy');
     }
     
-    // Transform guests array
+    // Transform guests array to required format
     $guests = array_map(function($age) {
         return ['Age Group' => getAgeGroup($age)];
     }, $data['Ages']);
@@ -94,13 +98,14 @@ try {
     ];
     
     // Initialize cURL session
-    $ch = curl_init('https://dev.gondwana-collection.com/Web-Store/Rates/Rates.php');
+    $ch = curl_init(GONDWANA_API_ENDPOINT);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST => true,
         CURLOPT_POSTFIELDS => json_encode($payload),
         CURLOPT_HTTPHEADER => [
-            'Content-Type: application/json'
+            'Content-Type: application/json',
+            'Accept: application/json'
         ]
     ]);
     
@@ -109,8 +114,14 @@ try {
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     
     if ($httpCode !== 200) {
-        throw new Exception('Remote API error');
+        throw new Exception('Remote API error: HTTP ' . $httpCode);
     }
+    
+    if (curl_errno($ch)) {
+        throw new Exception('Curl error: ' . curl_error($ch));
+    }
+    
+    curl_close($ch);
     
     // Parse response
     $responseData = json_decode($response, true);
@@ -118,7 +129,7 @@ try {
         throw new Exception('Invalid response from remote API');
     }
     
-    // Add availability status and format response
+    // Format response
     $formattedResponse = [
         'success' => true,
         'data' => [
@@ -139,6 +150,7 @@ try {
     echo json_encode($formattedResponse);
     
 } catch (Exception $e) {
+    error_log('API Error: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,

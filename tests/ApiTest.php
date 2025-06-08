@@ -10,6 +10,7 @@ class ApiTest extends TestCase
     {
         // Suppress header modification warnings during tests
         @ob_start();
+        require_once __DIR__ . '/../backend/helpers.php';
     }
 
     protected function tearDown(): void
@@ -21,16 +22,16 @@ class ApiTest extends TestCase
     {
         $date = "2025-06-08";
         $expected = "08/06/2025";
-        $this->assertEquals($expected, convertDate($date));
+        $this->assertEquals($expected, \convertDate($date));
     }
 
     public function testAgeGroupDetermination()
     {
         $age = 25;
-        $this->assertEquals("Adult", determineAgeGroup($age));
+        $this->assertEquals("Adult", \determineAgeGroup($age));
         
         $age = 11;
-        $this->assertEquals("Child", determineAgeGroup($age));
+        $this->assertEquals("Child", \determineAgeGroup($age));
     }
 
     public function testInputValidation()
@@ -42,12 +43,12 @@ class ApiTest extends TestCase
             "ages" => [25, 24]
         ];
         
-        $this->assertTrue(validateBookingInput($validInput));
+        $this->assertTrue(\validateBookingInput($validInput));
     }
 
     public function testAllowedOrigins()
     {
-        $origins = getAllowedOrigins();
+        $origins = \getAllowedOrigins();
         $this->assertIsArray($origins);
         $this->assertContains('https://gondwana-collection.com', $origins);
     }

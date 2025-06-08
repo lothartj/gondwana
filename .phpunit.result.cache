@@ -1,0 +1,1 @@
+{"version":1,"defects":[],"times":{"Tests\\ApiTest::testDateConversion":0.003,"Tests\\ApiTest::testAgeGroupDetermination":0,"Tests\\ApiTest::testInputValidation":0,"Tests\\ApiTest::testAllowedOrigins":0.001}}

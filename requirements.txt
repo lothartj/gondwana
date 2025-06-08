@@ -1,0 +1,13 @@
+# PHP Dependencies
+composer install
+
+# PHP Version
+php >= 7.4
+
+# Required PHP Extensions
+php-curl
+php-dom
+php-json
+
+# Environment Setup
+cp .env.example .env

@@ -49,4 +49,21 @@ class ApiTest extends TestCase
         ];
         $this->assertFalse(validateInput($invalidInput));
     }
+
+    public function testAllowedOrigins()
+    {
+        require_once __DIR__ . '/../backend/config.php';
+        
+        // Test development origins
+        putenv('APP_ENV=development');
+        $devOrigins = getAllowedOrigins();
+        $this->assertContains('http://localhost:8000', $devOrigins);
+        $this->assertContains('http://127.0.0.1:8000', $devOrigins);
+        
+        // Test production origins
+        putenv('APP_ENV=production');
+        $prodOrigins = getAllowedOrigins();
+        $this->assertContains('https://gondwana-collection.com', $prodOrigins);
+        $this->assertNotContains('http://localhost:8000', $prodOrigins);
+    }
 } 

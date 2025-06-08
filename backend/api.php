@@ -1,10 +1,20 @@
 <?php
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST');
-header('Access-Control-Allow-Headers: Content-Type');
-
+// Load configuration first to get allowed origins
 require_once 'config.php';
+
+// Set content type
+header('Content-Type: application/json');
+
+// CORS headers with proper origin checking
+$allowedOrigins = getAllowedOrigins();
+$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
+
+if (in_array($origin, $allowedOrigins)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+    header('Access-Control-Allow-Methods: POST');
+    header('Access-Control-Allow-Headers: Content-Type');
+    header('Access-Control-Max-Age: 86400'); // 24 hours cache
+}
 
 // Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {

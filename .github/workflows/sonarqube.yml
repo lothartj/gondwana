@@ -21,7 +21,7 @@ jobs:
         with:
           php-version: '8.1'
           coverage: xdebug
-          tools: phpcs, phpcpd
+          tools: phpcs, phpcpd, phpunit
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
@@ -31,6 +31,11 @@ jobs:
           mkdir -p coverage
           XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-clover coverage/coverage.xml --log-junit coverage/test-report.xml
 
+      - name: Fix file permissions
+        run: |
+          chmod -R 755 .
+          chmod -R +x vendor/bin/
+
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v5
         with:
@@ -38,6 +43,10 @@ jobs:
             -Dsonar.projectKey=lothartj_gondwana
             -Dsonar.organization=lothartj
             -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.php.coverage.reportPaths=coverage/coverage.xml
+            -Dsonar.php.tests.reportPath=coverage/test-report.xml
+            -Dsonar.qualitygate.wait=false
+            -Dsonar.verbose=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

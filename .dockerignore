@@ -1,0 +1,29 @@
+# Version control
+.git
+.gitignore
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Dependencies
+vendor/
+node_modules/
+
+# Development files
+*.log
+.vscode/
+.idea/
+*.md
+LICENSE
+
+# Test files
+tests/
+phpunit.*
+coverage/
+
+# Other unnecessary files
+Dockerfile
+docker-compose.yml
+.dockerignore 

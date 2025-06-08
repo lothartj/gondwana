@@ -14,6 +14,11 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Set environment variables
+ENV GONDWANA_API_URL="https://dev.gondwana-collection.com/Web-Store/Rates/Rates.php"
+ENV GONDWANA_ORIGIN="https://gondwana.onrender.com"
+ENV GONDWANA_REFERER="https://gondwana.onrender.com/frontend/index.html"
+
 # Set working directory
 WORKDIR /var/www/html
 

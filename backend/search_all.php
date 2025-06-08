@@ -25,75 +25,25 @@ $required_env_vars = [
     'GONDWANA_REFERER'
 ];
 
-// Load environment variables
-function loadEnv() {
-    global $required_env_vars;
-    
-    // Check if we're on Render.com
-    $is_render = isset($_SERVER['RENDER']) || getenv('RENDER') !== false;
-    
-    // If we're on Render, use system environment variables
-    if ($is_render) {
-        foreach ($required_env_vars as $var) {
-            $value = getenv($var);
-            if ($value === false) {
-                throw new Exception("Required environment variable {$var} is not set in Render environment");
-            }
-            $_ENV[$var] = $value;
-        }
-        return;
-    }
-    
-    // In development, load from .env file
-    $env_file = __DIR__ . '/../.env';
-    if (!file_exists($env_file)) {
-        throw new Exception('.env file not found for local development');
-    }
-    
-    $lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos($line, '#') === 0) continue;
-        if (strpos($line, '=') === false) continue;
-        
-        list($key, $value) = explode('=', $line, 2);
-        $key = trim($key);
-        $value = trim($value);
-        if (!empty($key)) {
-            putenv("$key=$value");
-            $_ENV[$key] = $value;
-            $_SERVER[$key] = $value;
-        }
-    }
-    
-    // Verify all required variables are set
-    foreach ($required_env_vars as $var) {
-        if (empty($_ENV[$var])) {
-            throw new Exception("Required environment variable {$var} is not set in .env file");
-        }
-    }
-}
-
 try {
-    // Only load env if not in test environment
-    if (php_sapi_name() !== 'cli') {
-        loadEnv();
-    }
-    
-    // Double check that we have all required variables
+    // Get environment variables from multiple sources
     foreach ($required_env_vars as $var) {
-        $value = $_ENV[$var] ?? getenv($var);
+        // Try all possible sources
+        $value = $_ENV[$var] ?? getenv($var) ?? $_SERVER[$var] ?? null;
+        
         if (empty($value)) {
             throw new Exception("Required environment variable {$var} is not set or empty");
         }
-        // Ensure it's in $_ENV
+        
+        // Store in $_ENV for consistent access
         $_ENV[$var] = $value;
     }
     
-    // Continue with the rest of your code...
     $api_url = $_ENV['GONDWANA_API_URL'];
     $origin = $_ENV['GONDWANA_ORIGIN'];
     $referer = $_ENV['GONDWANA_REFERER'];
     
+    // Initialize cURL
     $ch = curl_init();
     curl_setopt_array($ch, [
         CURLOPT_URL => $api_url,
@@ -134,15 +84,13 @@ try {
     
     $propertyData = extractPropertiesFromHTML($data['html']);
     
-    $result = [
+    echo json_encode([
         'success' => true,
         'data' => [
-            'total' => $data['total'],
+            'total' => $data['total'] ?? count($propertyData),
             'properties' => $propertyData
         ]
-    ];
-    
-    echo json_encode($result, JSON_PRETTY_PRINT);
+    ], JSON_PRETTY_PRINT);
     
 } catch (Exception $e) {
     error_log("Error in search_all.php: " . $e->getMessage());
@@ -151,13 +99,13 @@ try {
         'success' => false,
         'error' => $e->getMessage(),
         'debug_info' => [
-            'is_render' => isset($_SERVER['RENDER']) || getenv('RENDER') !== false,
             'env_vars_status' => array_map(function($var) {
                 return [
                     'name' => $var,
-                    'getenv' => getenv($var),
                     'env' => $_ENV[$var] ?? null,
-                    'server' => $_SERVER[$var] ?? null
+                    'getenv' => getenv($var),
+                    'server' => $_SERVER[$var] ?? null,
+                    'docker_env' => getenv($var, true) // true = local only
                 ];
             }, $required_env_vars),
             'php_version' => PHP_VERSION,

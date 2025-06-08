@@ -1,12 +1,18 @@
 <?php
 // Load configuration first to get allowed origins
 require_once 'config.php';
+require_once __DIR__ . '/helpers.php';
 
-// Set content type
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+// Only set headers if not in test environment
+if (php_sapi_name() !== 'cli') {
+    $origins = getAllowedOrigins();
+    $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
+    
+    header('Content-Type: application/json');
+    header('Access-Control-Allow-Origin: ' . (in_array($origin, $origins) ? $origin : $origins[0]));
+    header('Access-Control-Allow-Methods: POST, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization');
+}
 
 // Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {

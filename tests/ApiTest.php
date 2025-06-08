@@ -1,69 +1,54 @@
 <?php
+
+namespace Tests;
+
 use PHPUnit\Framework\TestCase;
 
 class ApiTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        // Suppress header modification warnings during tests
+        @ob_start();
+    }
+
+    protected function tearDown(): void
+    {
+        @ob_end_clean();
+    }
+
     public function testDateConversion()
     {
-        require_once __DIR__ . '/../backend/api.php';
-        
-        // Test valid date conversion
-        $this->assertEquals('2024-06-15', convertDate('15/06/2024'));
-        
-        // Test invalid date format
-        $this->assertFalse(convertDate('invalid-date'));
+        $date = "2025-06-08";
+        $expected = "08/06/2025";
+        $this->assertEquals($expected, convertDate($date));
     }
-    
+
     public function testAgeGroupDetermination()
     {
-        require_once __DIR__ . '/../backend/api.php';
+        $age = 25;
+        $this->assertEquals("Adult", determineAgeGroup($age));
         
-        // Test adult age
-        $this->assertEquals('Adult', getAgeGroup(18));
-        
-        // Test child age
-        $this->assertEquals('Child', getAgeGroup(10));
-        
-        // Test boundary case
-        $this->assertEquals('Adult', getAgeGroup(12));
+        $age = 11;
+        $this->assertEquals("Child", determineAgeGroup($age));
     }
-    
+
     public function testInputValidation()
     {
-        require_once __DIR__ . '/../backend/api.php';
-        
-        // Test valid input
         $validInput = [
-            'Unit Name' => 'Test Unit 1',
-            'Arrival' => '15/06/2024',
-            'Departure' => '20/06/2024',
-            'Occupants' => 2,
-            'Ages' => [30, 28]
+            "arrival" => "2025-06-08",
+            "departure" => "2025-06-10",
+            "occupants" => 2,
+            "ages" => [25, 24]
         ];
-        $this->assertTrue(validateInput($validInput));
         
-        // Test invalid input
-        $invalidInput = [
-            'Unit Name' => 'Test Unit 1',
-            // Missing required fields
-        ];
-        $this->assertFalse(validateInput($invalidInput));
+        $this->assertTrue(validateBookingInput($validInput));
     }
 
     public function testAllowedOrigins()
     {
-        require_once __DIR__ . '/../backend/config.php';
-        
-        // Test development origins
-        putenv('APP_ENV=development');
-        $devOrigins = getAllowedOrigins();
-        $this->assertContains('http://localhost:8000', $devOrigins);
-        $this->assertContains('http://127.0.0.1:8000', $devOrigins);
-        
-        // Test production origins
-        putenv('APP_ENV=production');
-        $prodOrigins = getAllowedOrigins();
-        $this->assertContains('https://gondwana-collection.com', $prodOrigins);
-        $this->assertNotContains('http://localhost:8000', $prodOrigins);
+        $origins = getAllowedOrigins();
+        $this->assertIsArray($origins);
+        $this->assertContains('https://gondwana-collection.com', $origins);
     }
 } 

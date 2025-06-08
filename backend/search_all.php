@@ -1,8 +1,17 @@
 <?php
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET');
-header('Access-Control-Allow-Headers: Content-Type');
+
+require_once __DIR__ . '/helpers.php';
+
+// Only set headers if not in test environment
+if (php_sapi_name() !== 'cli') {
+    $origins = getAllowedOrigins();
+    $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
+    
+    header('Content-Type: application/json');
+    header('Access-Control-Allow-Origin: ' . (in_array($origin, $origins) ? $origin : $origins[0]));
+    header('Access-Control-Allow-Methods: GET');
+    header('Access-Control-Allow-Headers: Content-Type');
+}
 
 // Error reporting for debugging
 error_reporting(E_ALL);
@@ -17,7 +26,7 @@ function loadEnv() {
     
     $lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
-        if (strpos($line, '#') === 0) continue; // Skip comments
+        if (strpos($line, '#') === 0) continue;
         list($key, $value) = explode('=', $line, 2);
         $key = trim($key);
         $value = trim($value);
@@ -29,8 +38,10 @@ function loadEnv() {
     }
 }
 
-// Load environment variables
-loadEnv();
+// Only load env if not in test environment
+if (php_sapi_name() !== 'cli') {
+    loadEnv();
+}
 
 function fetchProperties() {
     try {

@@ -18,11 +18,32 @@ if (php_sapi_name() !== 'cli') {
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 
-// Load environment variables from .env file
+// Required environment variables
+$required_env_vars = [
+    'GONDWANA_API_URL',
+    'GONDWANA_ORIGIN',
+    'GONDWANA_REFERER'
+];
+
+// Load environment variables from .env file in development
 function loadEnv() {
+    global $required_env_vars;
+    
+    // In production (like render.com), we use system environment variables
+    if (getenv('PRODUCTION') === 'true') {
+        foreach ($required_env_vars as $var) {
+            if (!getenv($var)) {
+                throw new Exception("Required environment variable {$var} is not set");
+            }
+            $_ENV[$var] = getenv($var);
+        }
+        return;
+    }
+    
+    // In development, load from .env file
     $env_file = __DIR__ . '/../.env';
     if (!file_exists($env_file)) {
-        throw new Exception('.env file not found');
+        throw new Exception('.env file not found and PRODUCTION environment is not set');
     }
     
     $lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -37,74 +58,97 @@ function loadEnv() {
             $_SERVER[$key] = $value;
         }
     }
-}
-
-// Only load env if not in test environment
-if (php_sapi_name() !== 'cli') {
-    loadEnv();
-}
-
-function fetchProperties() {
-    try {
-        $api_url = $_ENV['GONDWANA_API_URL'];
-        $origin = $_ENV['GONDWANA_ORIGIN'];
-        $referer = $_ENV['GONDWANA_REFERER'];
-        
-        $ch = curl_init();
-        curl_setopt_array($ch, [
-            CURLOPT_URL => $api_url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_HTTPGET => true,
-            CURLOPT_HTTPHEADER => [
-                'Accept: application/json',
-                'Origin: ' . $origin,
-                'Referer: ' . $referer,
-                'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            ]
-        ]);
-        
-        $response = curl_exec($ch);
-        
-        if (curl_errno($ch)) {
-            throw new Exception('API request failed: ' . curl_error($ch));
+    
+    // Verify all required variables are set
+    foreach ($required_env_vars as $var) {
+        if (!isset($_ENV[$var])) {
+            throw new Exception("Required environment variable {$var} is not set in .env file");
         }
-        
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        if ($httpCode !== 200) {
-            throw new Exception("API returned non-200 status code: $httpCode");
-        }
-        
-        $data = json_decode($response, true);
-        
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new Exception('Failed to parse API response: ' . json_last_error_msg());
-        }
-        
-        if (!isset($data['html'])) {
-            throw new Exception('API response missing HTML content');
-        }
-        
-        $propertyData = extractPropertiesFromHTML($data['html']);
-        
-        return [
-            'success' => true,
-            'data' => [
-                'total' => $data['total'],
-                'properties' => $propertyData
-            ]
-        ];
-        
-    } catch (Exception $e) {
-        error_log("Error in fetchProperties: " . $e->getMessage());
-        return [
-            'success' => false,
-            'error' => $e->getMessage()
-        ];
     }
+}
+
+try {
+    // Only load env if not in test environment
+    if (php_sapi_name() !== 'cli') {
+        loadEnv();
+    }
+    
+    // Verify environment variables are set
+    foreach ($required_env_vars as $var) {
+        if (empty($_ENV[$var])) {
+            throw new Exception("Required environment variable {$var} is not set or empty");
+        }
+    }
+    
+    // Continue with the rest of your code...
+    $api_url = $_ENV['GONDWANA_API_URL'];
+    $origin = $_ENV['GONDWANA_ORIGIN'];
+    $referer = $_ENV['GONDWANA_REFERER'];
+    
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $api_url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_HTTPGET => true,
+        CURLOPT_HTTPHEADER => [
+            'Accept: application/json',
+            'Origin: ' . $origin,
+            'Referer: ' . $referer,
+            'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        ]
+    ]);
+    
+    $response = curl_exec($ch);
+    
+    if (curl_errno($ch)) {
+        throw new Exception('API request failed: ' . curl_error($ch));
+    }
+    
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode !== 200) {
+        throw new Exception("API returned non-200 status code: $httpCode");
+    }
+    
+    $data = json_decode($response, true);
+    
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        throw new Exception('Failed to parse API response: ' . json_last_error_msg());
+    }
+    
+    if (!isset($data['html'])) {
+        throw new Exception('API response missing HTML content');
+    }
+    
+    $propertyData = extractPropertiesFromHTML($data['html']);
+    
+    $result = [
+        'success' => true,
+        'data' => [
+            'total' => $data['total'],
+            'properties' => $propertyData
+        ]
+    ];
+    
+    echo json_encode($result, JSON_PRETTY_PRINT);
+    
+} catch (Exception $e) {
+    error_log("Error in search_all.php: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage(),
+        'debug_info' => [
+            'production_mode' => getenv('PRODUCTION') === 'true',
+            'available_env_vars' => array_keys($_ENV),
+            'php_version' => PHP_VERSION,
+            'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'unknown'
+        ]
+    ]);
+    exit;
 }
 
 function extractPropertiesFromHTML($html) {
@@ -164,7 +208,3 @@ function extractPropertiesFromHTML($html) {
         throw $e;
     }
 }
-
-// Execute and return response
-$result = fetchProperties();
-echo json_encode($result, JSON_PRETTY_PRINT);

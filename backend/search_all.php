@@ -1,10 +1,4 @@
 <?php
-require __DIR__ . '/../vendor/autoload.php';
-
-// Load environment variables
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
-$dotenv->load();
-
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET');
@@ -14,9 +8,35 @@ header('Access-Control-Allow-Headers: Content-Type');
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 
+// Load environment variables from .env file
+function loadEnv() {
+    $env_file = __DIR__ . '/../.env';
+    if (!file_exists($env_file)) {
+        throw new Exception('.env file not found');
+    }
+    
+    $lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos($line, '#') === 0) continue; // Skip comments
+        list($key, $value) = explode('=', $line, 2);
+        $key = trim($key);
+        $value = trim($value);
+        if (!empty($key)) {
+            putenv("$key=$value");
+            $_ENV[$key] = $value;
+            $_SERVER[$key] = $value;
+        }
+    }
+}
+
+// Load environment variables
+loadEnv();
+
 function fetchProperties() {
     try {
-        $api_url = $_ENV['GONDWANA_API_URL'] ?? 'https://gondwana-collection.com/_hcms/api/disco/updatePropertiesBasedOnFilter';
+        $api_url = $_ENV['GONDWANA_API_URL'];
+        $origin = $_ENV['GONDWANA_ORIGIN'];
+        $referer = $_ENV['GONDWANA_REFERER'];
         
         $ch = curl_init();
         curl_setopt_array($ch, [
@@ -27,8 +47,8 @@ function fetchProperties() {
             CURLOPT_HTTPGET => true,
             CURLOPT_HTTPHEADER => [
                 'Accept: application/json',
-                'Origin: ' . ($_ENV['GONDWANA_ORIGIN'] ?? 'https://gondwana-collection.com'),
-                'Referer: ' . ($_ENV['GONDWANA_REFERER'] ?? 'https://gondwana-collection.com/'),
+                'Origin: ' . $origin,
+                'Referer: ' . $referer,
                 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             ]
         ]);

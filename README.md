@@ -27,7 +27,7 @@ A modern booking system for Gondwana Collection Namibia's luxury lodges and acti
 - HTML5 & CSS3 with modern features
 - Vanilla JavaScript for lightweight performance
 - Responsive design using CSS Grid and Flexbox
-- Custom styling with CSS variables for theming
+- Custom styling with CSS variables for themings
 
 ### Backend
 - PHP 8.1

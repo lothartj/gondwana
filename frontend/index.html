@@ -42,8 +42,7 @@
                     <div class="select-wrapper">
                         <select id="unit" name="unit">
                             <option value="" disabled selected>Select a property</option>
-                            <option value="Okapuka Safari Lodge">Okapuka Safari Lodge</option>
-                            <option value="The Weinberg">The Weinberg</option>
+                            <!-- Property options will be populated from API -->
                         </select>
                     </div>
                 </div>
@@ -211,6 +210,11 @@
     .search-button:hover {
         background-color: #2a4365;
     }
+    
+    .search-button:disabled {
+        background-color: #a0aec0;
+        cursor: not-allowed;
+    }
 
     .search-button-secondary {
         background-color: #4a5568;
@@ -219,9 +223,13 @@
     .search-button-secondary:hover {
         background-color: #2d3748;
     }
+    
+    .search-button-secondary:disabled {
+        background-color: #a0aec0;
+    }
 
     .search-button.loading {
-        color: transparent;
+        color: transparent !important;
     }
 
     .spinner {
@@ -236,6 +244,39 @@
         border-radius: 50%;
         border-top-color: white;
         animation: spin 1s linear infinite;
+    }
+    
+    .select-wrapper {
+        position: relative;
+    }
+    
+    .select-wrapper:after {
+        content: '▼';
+        font-size: 0.7rem;
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: #4a5568;
+    }
+    
+    select {
+        appearance: none;
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.25rem;
+        background-color: white;
+        color: #4a5568;
+        font-size: 1rem;
+        cursor: pointer;
+    }
+    
+    select:focus {
+        outline: none;
+        border-color: #4299e1;
+        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
     }
 
     @keyframes spin {
@@ -360,9 +401,146 @@
         border-radius: 4px;
         overflow-x: auto;
     }
+
+    .availability {
+        margin-bottom: 1rem;
+    }
+    
+    .status {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    
+    .status.available {
+        background-color: #c6f6d5;
+        color: #2f855a;
+    }
+    
+    .status.unavailable {
+        background-color: #fed7d7;
+        color: #c53030;
+    }
+    
+    .book-button {
+        width: 100%;
+        background: #2c5282;
+        color: white;
+        border: none;
+        padding: 0.75rem;
+        border-radius: 0.375rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .book-button:hover {
+        background: #2a4365;
+    }
+    
+    .book-button:disabled {
+        background-color: #a0aec0;
+        cursor: not-allowed;
+    }
+    
+    .mock-data-notice {
+        background-color: #fffde7;
+        border: 1px solid #ffd600;
+        border-radius: 4px;
+        padding: 1rem;
+        margin: 1rem 2rem;
+        color: #5c4500;
+    }
+    
+    .mock-data-notice p {
+        margin: 0.5rem 0;
+    }
+    
+    .mock-data-notice strong {
+        font-weight: 600;
+    }
     </style>
 
     <script>
+        // Global object to store property data
+        const propertiesData = {};
+
+        // Fetch properties from API
+        async function fetchProperties() {
+            // Disable search buttons while loading properties
+            const searchButtons = document.querySelectorAll('.search-button');
+            searchButtons.forEach(button => {
+                button.disabled = true;
+                button.classList.add('loading');
+                button.querySelector('.spinner').style.display = 'block';
+            });
+            
+            try {
+                const response = await fetch('../backend/fetch_properties.php');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch properties');
+                }
+                
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.error || 'API returned error');
+                }
+                
+                // Store property data in global object for later use
+                data.data.forEach(property => {
+                    propertiesData[property.title] = {
+                        unitTypeId: property.unit_type_id,
+                        imageUrl: property.image_url
+                    };
+                });
+                
+                // Populate dropdown
+                const unitDropdown = document.getElementById('unit');
+                unitDropdown.innerHTML = '<option value="" disabled selected>Select a property</option>';
+                
+                if (data.data.length === 0) {
+                    console.error('No properties returned from API');
+                    const option = document.createElement('option');
+                    option.value = "No properties available";
+                    option.textContent = "No properties available";
+                    option.disabled = true;
+                    unitDropdown.appendChild(option);
+                } else {
+                    data.data.forEach(property => {
+                        const option = document.createElement('option');
+                        option.value = property.title;
+                        option.textContent = property.title;
+                        unitDropdown.appendChild(option);
+                    });
+                    console.log('Properties loaded:', data.data.length);
+                }
+            } catch (error) {
+                console.error('Error fetching properties:', error);
+                const unitDropdown = document.getElementById('unit');
+                unitDropdown.innerHTML = '<option value="" disabled selected>Error loading properties</option>';
+                
+                // Show error in properties area
+                document.getElementById('properties').innerHTML = `
+                    <div class="error-message">
+                        <h3>Failed to load properties</h3>
+                        <p>Error details: ${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                // Re-enable search buttons
+                searchButtons.forEach(button => {
+                    button.disabled = false;
+                    button.classList.remove('loading');
+                    button.querySelector('.spinner').style.display = 'none';
+                });
+            }
+        }
+
+        // Load properties when the page loads
+        document.addEventListener('DOMContentLoaded', fetchProperties);
+
         // Mobile menu toggle
         document.getElementById('mobileMenuBtn').addEventListener('click', function() {
             document.getElementById('navbarLinks').classList.toggle('show');
@@ -572,12 +750,6 @@
             }
         });
 
-        // Unit Type mapping as per assignment
-        const unitTypes = {
-            'Okapuka Safari Lodge': -2147483637,
-            'The Weinberg': -2147483456
-        };
-
         // Set min date to today and max date to 1 year from now
         const today = new Date();
         const maxDate = new Date();
@@ -596,6 +768,13 @@
         arrivalInput.max = formatDateForInput(maxDate);
         departureInput.min = formatDateForInput(today);
         departureInput.max = formatDateForInput(maxDate);
+        
+        // Set default values to today and tomorrow
+        const tomorrow = new Date();
+        tomorrow.setDate(today.getDate() + 1);
+        
+        arrivalInput.value = formatDateForInput(today);
+        departureInput.value = formatDateForInput(tomorrow);
 
         // Update departure min date when arrival is selected
         arrivalInput.addEventListener('change', (e) => {
@@ -626,10 +805,29 @@
             const form = document.getElementById('searchForm');
             const button = event.target.closest('.search-button');
             
+            // Add loading state
+            button.classList.add('loading');
+            button.querySelector('.spinner').style.display = 'block';
+            
+            // Clear any existing mock data notices
+            document.querySelectorAll('.mock-data-notice').forEach(notice => {
+                notice.remove();
+            });
+            
+            // Declare apiData at function scope so it's available throughout
+            let apiData = {};
+            
             try {
-                // Add loading state
-                button.classList.add('loading');
-                button.querySelector('.spinner').style.display = 'block';
+                // Check if properties are loaded
+                if (Object.keys(propertiesData).length === 0) {
+                    // Try to load properties again
+                    await fetchProperties();
+                    
+                    // If still no properties, throw error
+                    if (Object.keys(propertiesData).length === 0) {
+                        throw new Error('Unable to load property data. Please refresh the page and try again.');
+                    }
+                }
                 
                 let response;
                 if (searchType === 'available') {
@@ -648,9 +846,15 @@
                         throw new Error('Please select a property to check availability');
                     }
 
-                    const apiData = {
+                    // Get unitTypeId from propertiesData
+                    const unitTypeId = propertiesData[form.unit.value]?.unitTypeId;
+                    if (!unitTypeId) {
+                        throw new Error('Invalid property selection: Unit Type ID not found for ' + form.unit.value);
+                    }
+
+                    apiData = {
                         "Property": form.unit.value,
-                        "Unit Type ID": unitTypes[form.unit.value],
+                        "Unit Type ID": unitTypeId,
                         "Arrival": form.arrival.value.split('-').reverse().join('/'),
                         "Departure": form.departure.value.split('-').reverse().join('/'),
                         "Guests": []
@@ -662,6 +866,8 @@
                             "Age Group": ages[i] >= 12 ? "Adult" : "Child"
                         });
                     }
+                    
+                    console.log('Sending API request:', apiData);
                     
                     response = await fetch('../backend/api.php', {
                         method: 'POST',
@@ -705,6 +911,20 @@
                     
                     throw new Error(`${errorDetails}\n\nDebug Info: ${debugInfo}\n\nResponse Structure: ${responseStructure}`);
                 }
+                
+                // Check if mock data is being used
+                if (data.note && data.note.includes('mock data')) {
+                    console.warn('Using mock data:', data.note);
+                    
+                    // Add a notification to the UI
+                    const mockNotice = document.createElement('div');
+                    mockNotice.className = 'mock-data-notice';
+                    mockNotice.innerHTML = `
+                        <p><strong>Notice:</strong> ${data.note}</p>
+                        <p>This is sample data for development purposes.</p>
+                    `;
+                    document.getElementById('properties').insertAdjacentElement('beforebegin', mockNotice);
+                }
 
                 // Display properties based on search type
                 if (searchType === 'available') {
@@ -722,23 +942,74 @@
                     }
                     
                     // Add unit type
-                    featuresArray.push("Unit Type ID: " + unitTypes[form.unit.value]);
+                    featuresArray.push("Unit Type ID: " + apiData["Unit Type ID"]);
+                    
+                    // Get image URL from propertiesData
+                    const imageUrl = propertiesData[form.unit.value]?.imageUrl || 'https://placehold.co/600x400/e2e8f0/4a5568?text=No+Image+Available';
+                    
+                    // Initialize availability and rate
+                    let isAvailable = false;
+                    let rateAmount = 'Price on request';
+                    
+                    // Handle mock data differently than real API response
+                    if (data.note && data.note.includes('mock data')) {
+                        // For mock data we use the simple Available flag and Rate
+                        isAvailable = data.data.Available;
+                        rateAmount = data.data.Rate || data.data['Total Charge'] || 'Price on request';
+                    } 
+                    else {
+                        // For real API response
+                        // Check if there's a "Legs" array with error messages
+                        if (data.data.Legs && data.data.Legs.length > 0) {
+                            const firstLeg = data.data.Legs[0];
+                            
+                            // Check for error indicating unavailability
+                            const errorMessage = firstLeg["Error Message"];
+                            if (errorMessage && errorMessage.includes("Failed")) {
+                                isAvailable = false;
+                            } else {
+                                // No availability-blocking error found
+                                isAvailable = true;
+                                
+                                // Try to find rate in the leg
+                                if (firstLeg["Total Charge"] && firstLeg["Total Charge"] > 0) {
+                                    rateAmount = firstLeg["Total Charge"];
+                                } else if (firstLeg["Effective Average Daily Rate"] && 
+                                          firstLeg["Effective Average Daily Rate"] > 0) {
+                                    rateAmount = firstLeg["Effective Average Daily Rate"];
+                                }
+                            }
+                        }
+                        
+                        // If we still don't have a rate, try the top-level fields
+                        if (rateAmount === 'Price on request' && isAvailable) {
+                            if (data.data["Total Charge"] && data.data["Total Charge"] > 0) {
+                                rateAmount = data.data["Total Charge"];
+                            }
+                        }
+                    }
                     
                     displayAvailableProperties([{
                         title: form.unit.value,
-                        rate: data.data.Rate || data.data.rate || data.data["Total Charge"] || 'Price on request',
-                        availability: data.data.Available || data.data.available ? 'Available' : 'Unavailable',
+                        rate: rateAmount,
+                        availability: isAvailable ? 'Available' : 'Unavailable',
                         dateRange: {
                             arrival: form.arrival.value,
                             departure: form.departure.value
                         },
                         features: featuresArray,
-                        image_url: form.unit.value === 'Okapuka Safari Lodge' 
-                            ? './images/okapuka.jpg' 
-                            : './images/weinberg.jpg'
+                        image_url: imageUrl
                     }]);
                 } else {
                     displayAllProperties(data.data);
+                }
+
+                // Add detailed console logging to debug the response structure
+                console.log('Full API response data:', data.data);
+                console.log('Has Legs array:', Boolean(data.data.Legs));
+                if (data.data.Legs) {
+                    console.log('First leg:', data.data.Legs[0]);
+                    console.log('Error message:', data.data.Legs[0]["Error Message"]);
                 }
             } catch (error) {
                 console.error('API Error:', error);
@@ -770,17 +1041,25 @@
                     featuresHTML += '<span class="feature">' + property.features[j] + '</span>';
                 }
                 
+                // Handle missing image URLs with a placeholder
+                const imageUrl = property.image_url && property.image_url.trim() !== '' 
+                    ? property.image_url 
+                    : 'https://placehold.co/600x400/e2e8f0/4a5568?text=No+Image+Available';
+                
+                // Determine if property is available
+                const isAvailable = property.availability === 'Available';
+                
                 propertiesHTML += 
                 '<div class="property-card">' +
-                    '<div class="property-image" style="background-image: url(\'' + property.image_url + '\')"></div>' +
+                    '<div class="property-image" style="background-image: url(\'' + imageUrl + '\')"></div>' +
                     '<div class="property-details">' +
                         '<h3>' + property.title + '</h3>' +
                         '<div class="features">' + featuresHTML + '</div>' +
                         '<div class="price">' +
-                            '<span class="amount">' + (property.rate ? 'N$' + property.rate : 'Price on request') + '</span>' +
+                            '<span class="amount">' + (property.rate && property.rate !== 'Price on request' ? 'N$' + property.rate : property.rate) + '</span>' +
                         '</div>' +
                         '<div class="availability">' +
-                            '<span class="status ' + (property.availability === 'Available' ? 'available' : 'unavailable') + '">' +
+                            '<span class="status ' + (isAvailable ? 'available' : 'unavailable') + '">' +
                                 property.availability +
                             '</span>' +
                         '</div>' +
@@ -788,8 +1067,8 @@
                             '<p>From: ' + property.dateRange.arrival + '</p>' +
                             '<p>To: ' + property.dateRange.departure + '</p>' +
                         '</div>' +
-                        '<button onclick="openBookingForm(\'' + property.title + '\')" class="book-button" ' + (property.availability !== 'Available' ? 'disabled' : '') + '>' +
-                            'Book Now' +
+                        '<button onclick="openBookingForm(\'' + property.title + '\')" class="book-button" ' + (!isAvailable ? 'disabled' : '') + '>' +
+                            (isAvailable ? 'Book Now' : 'Not Available') +
                         '</button>' +
                     '</div>' +
                 '</div>';
@@ -837,7 +1116,7 @@
                 
                 propertiesHTML += 
                 '<div class="property-card">' +
-                    '<div class="property-image" style="background-image: url(\'' + (property.image_url || './images/placeholder.jpg') + '\')"></div>' +
+                    '<div class="property-image" style="background-image: url(\'' + (property.image_url && property.image_url.trim() !== '' ? property.image_url : 'https://placehold.co/600x400/e2e8f0/4a5568?text=No+Image+Available') + '\')"></div>' +
                     '<div class="property-details">' +
                         '<h3>' + property.title + '</h3>' +
                         '<div class="features">' + featuresHTML + '</div>' +

@@ -393,6 +393,7 @@
         const chatInput = document.getElementById('chatInput');
         const sendMessageBtn = document.getElementById('sendMessageBtn');
         const chatMessages = document.getElementById('chatMessages');
+        let conversationHistory = [];
         
         chatSupportBtn.addEventListener('click', function() {
             chatSupportWindow.classList.toggle('hidden');
@@ -402,10 +403,10 @@
             chatSupportWindow.classList.add('hidden');
         });
         
-        function sendMessage() {
+        async function sendMessage() {
             const message = chatInput.value.trim();
             if (message) {
-                // Add user message
+                // Add user message to UI
                 const currentTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 chatMessages.innerHTML += `
                     <div class="message user">
@@ -416,22 +417,151 @@
                     </div>
                 `;
                 
+                // Add to conversation history
+                conversationHistory.push({
+                    role: 'user',
+                    content: message
+                });
+                
+                // Clear input and scroll to bottom
                 chatInput.value = '';
                 chatMessages.scrollTop = chatMessages.scrollHeight;
                 
-                // Simulate response after 1 second
-                setTimeout(function() {
+                // Show loading indicator
+                chatMessages.innerHTML += `
+                    <div class="message support" id="loading-message">
+                        <div class="message-content">
+                            <p><span class="typing-indicator"><span>.</span><span>.</span><span>.</span></span></p>
+                        </div>
+                    </div>
+                `;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                try {
+                    // Send to backend
+                    const response = await fetch('../backend/chatsupport.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            message: message,
+                            history: conversationHistory
+                        })
+                    });
+                    
+                    const responseData = await response.json();
+                    
+                    // Remove loading indicator
+                    const loadingMessage = document.getElementById('loading-message');
+                    if (loadingMessage) {
+                        loadingMessage.remove();
+                    }
+                    
+                    if (responseData.success) {
+                        // Add AI response to conversation history
+                        conversationHistory.push({
+                            role: 'assistant',
+                            content: responseData.message
+                        });
+                        
+                        // Format the message
+                        const formattedMessage = formatChatMessage(responseData.message);
+                        
+                        // Add AI response to UI
+                        chatMessages.innerHTML += `
+                            <div class="message support">
+                                <div class="message-content">
+                                    <div class="formatted-message">${formattedMessage}</div>
+                                    <span class="message-time">${responseData.timestamp || currentTime}</span>
+                                </div>
+                            </div>
+                        `;
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    } else {
+                        throw new Error(responseData.error || 'Failed to get response');
+                    }
+                } catch (error) {
+                    console.error('Chat Error:', error);
+                    
+                    // Remove loading indicator
+                    const loadingMessage = document.getElementById('loading-message');
+                    if (loadingMessage) {
+                        loadingMessage.remove();
+                    }
+                    
+                    // Show error message
                     chatMessages.innerHTML += `
                         <div class="message support">
                             <div class="message-content">
-                                <p>Thank you for your message. A customer service representative will respond shortly.</p>
+                                <p>I'm sorry, there was a problem processing your request. Please try again later or contact us directly at info@gondwana-collection.com.</p>
                                 <span class="message-time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                             </div>
                         </div>
                     `;
                     chatMessages.scrollTop = chatMessages.scrollHeight;
-                }, 1000);
+                }
             }
+        }
+        
+        // Function to format chat messages with proper styling
+        function formatChatMessage(message) {
+            // Replace asterisk bullet points with proper HTML list items
+            let formattedText = message;
+            
+            // Check if there are bullet points (lines starting with * or -)
+            if (formattedText.includes('\n* ') || formattedText.includes('\n- ')) {
+                // Split the text into lines
+                const lines = formattedText.split('\n');
+                let inList = false;
+                let formattedLines = [];
+                
+                for (let line of lines) {
+                    if (line.trim().startsWith('* ') || line.trim().startsWith('- ')) {
+                        // This is a list item
+                        const itemContent = line.trim().substring(2);
+                        
+                        if (!inList) {
+                            // Start a new list
+                            formattedLines.push('<ul class="chat-list">');
+                            inList = true;
+                        }
+                        
+                        formattedLines.push(`<li>${itemContent}</li>`);
+                    } else {
+                        // This is not a list item
+                        if (inList) {
+                            // End the current list
+                            formattedLines.push('</ul>');
+                            inList = false;
+                        }
+                        
+                        formattedLines.push(line);
+                    }
+                }
+                
+                // Close the list if we're still in one
+                if (inList) {
+                    formattedLines.push('</ul>');
+                }
+                
+                formattedText = formattedLines.join('\n');
+            }
+            
+            // Replace **text** or *text* with <strong>text</strong> for bold
+            formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            formattedText = formattedText.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
+            
+            // Convert email addresses to proper links
+            formattedText = formattedText.replace(/\[([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\]/g, '$1');
+            formattedText = formattedText.replace(/\(mailto:([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\)/g, '');
+            formattedText = formattedText.replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, '<a href="mailto:$1">$1</a>');
+            
+            // Convert line breaks to <br> tags
+            formattedText = formattedText.replace(/\n/g, '<br>');
+            
+            return formattedText;
         }
         
         sendMessageBtn.addEventListener('click', sendMessage);

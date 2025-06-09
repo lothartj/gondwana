@@ -284,122 +284,124 @@ input:focus, select:focus {
 
 .property-card {
     background: white;
-    border-radius: 20px;
+    border-radius: 15px;
     overflow: hidden;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-    transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
     border: 1px solid rgba(0, 0, 0, 0.05);
     width: 100%;
+    margin-bottom: 1.5rem;
 }
 
 .property-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-    border-color: rgba(196, 148, 76, 0.2);
+    transform: translateY(-6px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
 }
 
 .property-image {
-    height: 300px;
+    height: 250px;
     background-size: cover;
     background-position: center;
     position: relative;
-    transition: all 0.5s ease;
-}
-
-.property-card:hover .property-image {
-    transform: scale(1.05);
-}
-
-.property-image::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 70%;
-    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-    opacity: 0.8;
-    transition: opacity 0.3s ease;
 }
 
 .property-details {
-    padding: 2rem;
+    padding: 1.8rem;
     background: white;
-    position: relative;
 }
 
 .property-details h3 {
     color: var(--primary-color);
-    margin-bottom: 1.5rem;
-    font-size: 1.8rem;
+    margin-bottom: 1.2rem;
+    font-size: 1.5rem;
     font-weight: 600;
     line-height: 1.3;
-    letter-spacing: -0.5px;
 }
 
 .features {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.8rem;
-    margin-bottom: 2rem;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
 }
 
 .feature {
     background: rgba(196, 148, 76, 0.08);
-    padding: 0.6rem 1.2rem;
-    border-radius: 30px;
-    font-size: 0.95rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
     color: var(--secondary-color);
     font-weight: 500;
-    letter-spacing: 0.3px;
-    border: 1px solid rgba(196, 148, 76, 0.15);
-    transition: all 0.3s ease;
-}
-
-.property-card:hover .feature {
-    background: rgba(196, 148, 76, 0.12);
-    border-color: rgba(196, 148, 76, 0.25);
 }
 
 .price {
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     display: flex;
     align-items: baseline;
-    gap: 0.8rem;
 }
 
 .amount {
-    font-size: 2rem;
+    font-size: 1.8rem;
     font-weight: 700;
     color: var(--secondary-color);
-    letter-spacing: -0.5px;
-    transition: all 0.3s ease;
 }
 
-.property-card:hover .amount {
-    transform: scale(1.05);
-    color: #b38544;
+.book-button, .view-button {
+    width: 100%;
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
 }
 
-.description {
-    font-size: 1rem;
-    color: #666;
-    opacity: 0.9;
+.book-button:hover, .view-button:hover {
+    background-color: #b38544;
+}
+
+.book-button[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #95a5a6;
+}
+
+.view-button {
+    display: block;
+    text-decoration: none;
+    text-align: center;
+}
+
+.property-location {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #718096;
+    font-size: 0.9rem;
+    margin-bottom: 1.2rem;
+}
+
+.property-location i {
+    color: var(--secondary-color);
 }
 
 .availability {
-    margin: 1.5rem 0;
+    margin: 1.2rem 0;
     text-align: center;
 }
 
 .status {
-    padding: 0.8rem 1.5rem;
-    border-radius: 30px;
+    padding: 0.6rem 1.2rem;
+    border-radius: 20px;
     font-weight: 600;
-    font-size: 1rem;
-    letter-spacing: 0.5px;
+    font-size: 0.9rem;
     text-transform: uppercase;
-    transition: all 0.3s ease;
     display: inline-block;
 }
 
@@ -416,81 +418,17 @@ input:focus, select:focus {
 }
 
 .date-range {
-    margin: 1.5rem 0;
-    padding: 1.5rem;
+    margin: 1.2rem 0;
+    padding: 1.2rem;
     background: #f8f9fa;
-    border-radius: 15px;
+    border-radius: 10px;
     border: 1px solid rgba(0, 0, 0, 0.05);
+    font-size: 0.95rem;
 }
 
 .date-range p {
-    margin: 0.5rem 0;
+    margin: 0.4rem 0;
     color: var(--primary-color);
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-}
-
-.date-range p::before {
-    content: '';
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    background-color: var(--secondary-color);
-    border-radius: 50%;
-    opacity: 0.7;
-}
-
-.book-button {
-    width: 100%;
-    background-color: var(--secondary-color);
-    color: white;
-    padding: 1.2rem;
-    border: none;
-    border-radius: 12px;
-    font-size: 1.2rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-    position: relative;
-    overflow: hidden;
-    text-transform: uppercase;
-}
-
-.book-button::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(120deg, transparent, rgba(255,255,255,0.3), transparent);
-    transform: translateX(-100%);
-    transition: transform 0.8s ease;
-}
-
-.book-button:hover {
-    background-color: #b38544;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(196, 148, 76, 0.4);
-}
-
-.book-button:hover::after {
-    transform: translateX(100%);
-}
-
-.book-button:active {
-    transform: translateY(0);
-}
-
-.book-button[disabled] {
-    opacity: 0.6;
-    cursor: not-allowed;
-    background-color: #95a5a6;
-    transform: none;
-    box-shadow: none;
 }
 
 .error-message {

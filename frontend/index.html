@@ -111,6 +111,40 @@
         </div>
     </div>
 
+    <!-- Scroll To Top Button -->
+    <button id="scrollToTopBtn" class="scroll-to-top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- Chat Support Button -->
+    <button id="chatSupportBtn" class="chat-support-btn">
+        <i class="fas fa-comments"></i>
+    </button>
+
+    <!-- Chat Support Window -->
+    <div id="chatSupportWindow" class="chat-support-window hidden">
+        <div class="chat-header">
+            <h3>Chat Support</h3>
+            <button id="closeChatBtn" class="close-chat-btn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message support">
+                <div class="message-content">
+                    <p>Hello! How can we help you today?</p>
+                    <span class="message-time">Just now</span>
+                </div>
+            </div>
+        </div>
+        <div class="chat-input-container">
+            <input type="text" id="chatInput" placeholder="Type your message here..." class="chat-input">
+            <button id="sendMessageBtn" class="send-message-btn">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="footer">
         <div class="footer-content">
@@ -332,6 +366,80 @@
         // Mobile menu toggle
         document.getElementById('mobileMenuBtn').addEventListener('click', function() {
             document.getElementById('navbarLinks').classList.toggle('show');
+        });
+
+        // Scroll to top button
+        const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+        
+        window.addEventListener('scroll', function() {
+            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+                scrollToTopBtn.classList.add('show');
+            } else {
+                scrollToTopBtn.classList.remove('show');
+            }
+        });
+        
+        scrollToTopBtn.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Chat support
+        const chatSupportBtn = document.getElementById('chatSupportBtn');
+        const chatSupportWindow = document.getElementById('chatSupportWindow');
+        const closeChatBtn = document.getElementById('closeChatBtn');
+        const chatInput = document.getElementById('chatInput');
+        const sendMessageBtn = document.getElementById('sendMessageBtn');
+        const chatMessages = document.getElementById('chatMessages');
+        
+        chatSupportBtn.addEventListener('click', function() {
+            chatSupportWindow.classList.toggle('hidden');
+        });
+        
+        closeChatBtn.addEventListener('click', function() {
+            chatSupportWindow.classList.add('hidden');
+        });
+        
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (message) {
+                // Add user message
+                const currentTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                chatMessages.innerHTML += `
+                    <div class="message user">
+                        <div class="message-content">
+                            <p>${message}</p>
+                            <span class="message-time">${currentTime}</span>
+                        </div>
+                    </div>
+                `;
+                
+                chatInput.value = '';
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Simulate response after 1 second
+                setTimeout(function() {
+                    chatMessages.innerHTML += `
+                        <div class="message support">
+                            <div class="message-content">
+                                <p>Thank you for your message. A customer service representative will respond shortly.</p>
+                                <span class="message-time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            </div>
+                        </div>
+                    `;
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 1000);
+            }
+        }
+        
+        sendMessageBtn.addEventListener('click', sendMessage);
+        
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
         });
 
         // Unit Type mapping as per assignment

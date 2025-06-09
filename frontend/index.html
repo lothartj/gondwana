@@ -650,14 +650,19 @@
 
                     const apiData = {
                         "Property": form.unit.value,
-                        "UnitTypeID": unitTypes[form.unit.value],
+                        "Unit Type ID": unitTypes[form.unit.value],
                         "Arrival": form.arrival.value.split('-').reverse().join('/'),
                         "Departure": form.departure.value.split('-').reverse().join('/'),
-                        "Guests": ages.map(age => ({
-                            "AgeGroup": age >= 12 ? "Adult" : "Child"
-                        }))
+                        "Guests": []
                     };
-
+                    
+                    // Create guests array using traditional for loop
+                    for (let i = 0; i < ages.length; i++) {
+                        apiData.Guests.push({
+                            "Age Group": ages[i] >= 12 ? "Adult" : "Child"
+                        });
+                    }
+                    
                     response = await fetch('../backend/api.php', {
                         method: 'POST',
                         headers: {
@@ -703,19 +708,31 @@
 
                 // Display properties based on search type
                 if (searchType === 'available') {
+                    // Create features array
+                    var featuresArray = [];
+                    featuresArray.push(form.occupants.value + " guests");
+                    
+                    // Add age features
+                    var ages = form.ages.value.split(',')
+                        .map(function(age) { return parseInt(age.trim()); })
+                        .filter(function(age) { return !isNaN(age); });
+                    
+                    for (var i = 0; i < ages.length; i++) {
+                        featuresArray.push(ages[i] + " years old");
+                    }
+                    
+                    // Add unit type
+                    featuresArray.push("Unit Type ID: " + unitTypes[form.unit.value]);
+                    
                     displayAvailableProperties([{
                         title: form.unit.value,
-                        rate: data.data.Rate || data.data.rate || 'Price on request',
+                        rate: data.data.Rate || data.data.rate || data.data["Total Charge"] || 'Price on request',
                         availability: data.data.Available || data.data.available ? 'Available' : 'Unavailable',
                         dateRange: {
                             arrival: form.arrival.value,
                             departure: form.departure.value
                         },
-                        features: [
-                            `${form.occupants.value} guests`,
-                            ...ages.map(age => `${age} years old`),
-                            `Unit Type ID: ${unitTypes[form.unit.value]}`
-                        ],
+                        features: featuresArray,
                         image_url: form.unit.value === 'Okapuka Safari Lodge' 
                             ? './images/okapuka.jpg' 
                             : './images/weinberg.jpg'
@@ -743,32 +760,42 @@
 
         function displayAvailableProperties(properties) {
             const propertiesDiv = document.getElementById('properties');
-            propertiesDiv.innerHTML = properties.map(property => `
-                <div class="property-card">
-                    <div class="property-image" style="background-image: url('${property.image_url}')"></div>
-                    <div class="property-details">
-                        <h3>${property.title}</h3>
-                        <div class="features">
-                            ${property.features.map(feature => `<span class="feature">${feature}</span>`).join('')}
-                        </div>
-                        <div class="price">
-                            <span class="amount">${property.rate ? 'N$' + property.rate : 'Price on request'}</span>
-                        </div>
-                        <div class="availability">
-                            <span class="status ${property.availability === 'Available' ? 'available' : 'unavailable'}">
-                                ${property.availability}
-                            </span>
-                        </div>
-                        <div class="date-range">
-                            <p>From: ${property.dateRange.arrival}</p>
-                            <p>To: ${property.dateRange.departure}</p>
-                        </div>
-                        <button onclick="openBookingForm('${property.title}')" class="book-button" ${property.availability !== 'Available' ? 'disabled' : ''}>
-                            Book Now
-                        </button>
-                    </div>
-                </div>
-            `).join('');
+            
+            let propertiesHTML = '';
+            for (let i = 0; i < properties.length; i++) {
+                const property = properties[i];
+                
+                let featuresHTML = '';
+                for (let j = 0; j < property.features.length; j++) {
+                    featuresHTML += '<span class="feature">' + property.features[j] + '</span>';
+                }
+                
+                propertiesHTML += 
+                '<div class="property-card">' +
+                    '<div class="property-image" style="background-image: url(\'' + property.image_url + '\')"></div>' +
+                    '<div class="property-details">' +
+                        '<h3>' + property.title + '</h3>' +
+                        '<div class="features">' + featuresHTML + '</div>' +
+                        '<div class="price">' +
+                            '<span class="amount">' + (property.rate ? 'N$' + property.rate : 'Price on request') + '</span>' +
+                        '</div>' +
+                        '<div class="availability">' +
+                            '<span class="status ' + (property.availability === 'Available' ? 'available' : 'unavailable') + '">' +
+                                property.availability +
+                            '</span>' +
+                        '</div>' +
+                        '<div class="date-range">' +
+                            '<p>From: ' + property.dateRange.arrival + '</p>' +
+                            '<p>To: ' + property.dateRange.departure + '</p>' +
+                        '</div>' +
+                        '<button onclick="openBookingForm(\'' + property.title + '\')" class="book-button" ' + (property.availability !== 'Available' ? 'disabled' : '') + '>' +
+                            'Book Now' +
+                        '</button>' +
+                    '</div>' +
+                '</div>';
+            }
+            
+            propertiesDiv.innerHTML = propertiesHTML;
         }
 
         function displayAllProperties(data) {
@@ -784,33 +811,48 @@
                 return;
             }
 
-            propertiesDiv.innerHTML = data.properties.map(property => `
-                <div class="property-card">
-                    <div class="property-image" style="background-image: url('${property.image_url || './images/placeholder.jpg'}')"></div>
-                    <div class="property-details">
-                        <h3>${property.title}</h3>
-                        <div class="features">
-                            ${property.features.filter(feature => feature).map(feature => 
-                                `<span class="feature">${feature}</span>`
-                            ).join('')}
-                        </div>
-                        <div class="price">
-                            <span class="amount">${property.price}</span>
-                        </div>
-                        <div class="property-location">
-                            <i class="fas fa-map-marker-alt"></i> ${property.location || 'Location not specified'}
-                        </div>
-                        ${property.booking_url ? 
-                            `<a href="${property.booking_url}" class="view-button" target="_blank">
-                                Book Now
-                            </a>` :
-                            `<button onclick="viewProperty('${property.locationId}')" class="view-button">
-                                View Details
-                            </button>`
-                        }
-                    </div>
-                </div>
-            `).join('');
+            let propertiesHTML = '';
+            for (let i = 0; i < data.properties.length; i++) {
+                const property = data.properties[i];
+                
+                // Filter features and create HTML
+                let featuresHTML = '';
+                for (let j = 0; j < property.features.length; j++) {
+                    if (property.features[j]) {
+                        featuresHTML += '<span class="feature">' + property.features[j] + '</span>';
+                    }
+                }
+                
+                // Determine button type
+                let buttonHTML = '';
+                if (property.booking_url) {
+                    buttonHTML = '<a href="' + property.booking_url + '" class="view-button" target="_blank">' +
+                                    'Book Now' +
+                                 '</a>';
+                } else {
+                    buttonHTML = '<button onclick="viewProperty(\'' + property.locationId + '\')" class="view-button">' +
+                                    'View Details' +
+                                 '</button>';
+                }
+                
+                propertiesHTML += 
+                '<div class="property-card">' +
+                    '<div class="property-image" style="background-image: url(\'' + (property.image_url || './images/placeholder.jpg') + '\')"></div>' +
+                    '<div class="property-details">' +
+                        '<h3>' + property.title + '</h3>' +
+                        '<div class="features">' + featuresHTML + '</div>' +
+                        '<div class="price">' +
+                            '<span class="amount">' + property.price + '</span>' +
+                        '</div>' +
+                        '<div class="property-location">' +
+                            '<i class="fas fa-map-marker-alt"></i> ' + (property.location || 'Location not specified') +
+                        '</div>' +
+                        buttonHTML +
+                    '</div>' +
+                '</div>';
+            }
+            
+            propertiesDiv.innerHTML = propertiesHTML;
         }
 
         function viewProperty(propertyId) {

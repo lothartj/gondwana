@@ -153,17 +153,17 @@ try {
     }
 
     // Check if UnitTypeID is provided
-    if (!isset($postData['UnitTypeID'])) {
-        throw new Exception("Invalid property selection: UnitTypeID not found for " . $postData['Property']);
+    if (!isset($postData['Unit Type ID'])) {
+        throw new Exception("Invalid property selection: Unit Type ID not found for " . $postData['Property']);
     }
 
     // Transform the request to match Gondwana's API format
     $apiRequest = [
-        'UnitTypeID' => $postData['UnitTypeID'],
+        'Unit Type ID' => $postData['Unit Type ID'],
         'Arrival' => $postData['Arrival'],
         'Departure' => $postData['Departure'],
         'Guests' => array_map(function($guest) {
-            return ['AgeGroup' => $guest['AgeGroup']];
+            return ['Age Group' => $guest['Age Group']];
         }, $postData['Guests']),
         'Currency' => 'NAD',
         'Source' => 'Web',

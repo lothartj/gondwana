@@ -12,7 +12,10 @@
     <!-- Navbar -->
     <nav class="navbar">
         <img src="../images/gondwanalogo.webp" alt="Gondwana Collection" class="navbar-logo">
-        <div class="navbar-links">
+        <div class="mobile-menu-btn" id="mobileMenuBtn">
+            <i class="fas fa-bars"></i>
+        </div>
+        <div class="navbar-links" id="navbarLinks">
             <a href="#">Explore</a>
             <a href="#">Travel Offers</a>
             <a href="#">News & Blog</a>
@@ -82,6 +85,7 @@
         <div class="booking-form-content">
             <div class="search-container">
                 <div class="search-grid">
+                    <input type="hidden" id="selectedProperty">
                     <div class="form-group">
                         <label for="booking-arrival">Check In</label>
                         <input type="date" id="booking-arrival" name="arrival" required>
@@ -100,7 +104,7 @@
                     </div>
                 </div>
                 <div class="booking-actions">
-                    <button type="submit">Confirm Booking</button>
+                    <button type="button" onclick="submitBooking(event)">Confirm Booking</button>
                     <button type="button" onclick="closeBookingForm()">Cancel</button>
                 </div>
             </div>
@@ -325,6 +329,11 @@
     </style>
 
     <script>
+        // Mobile menu toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+            document.getElementById('navbarLinks').classList.toggle('show');
+        });
+
         // Unit Type mapping as per assignment
         const unitTypes = {
             'Okapuka Safari Lodge': -2147483637,
@@ -537,37 +546,33 @@
                 return;
             }
 
-            propertiesDiv.innerHTML = `
-                <div class="properties-grid">
-                    ${data.properties.map(property => `
-                        <div class="property-card">
-                            <div class="property-image" style="background-image: url('${property.image_url || './images/placeholder.jpg'}')"></div>
-                            <div class="property-details">
-                                <h3>${property.title}</h3>
-                                <div class="features">
-                                    ${property.features.filter(feature => feature).map(feature => 
-                                        `<span class="feature">${feature}</span>`
-                                    ).join('')}
-                                </div>
-                                <div class="price">
-                                    <span class="amount">${property.price}</span>
-                                </div>
-                                <div class="property-location">
-                                    <i class="fas fa-map-marker-alt"></i> ${property.location || 'Location not specified'}
-                                </div>
-                                ${property.booking_url ? 
-                                    `<a href="${property.booking_url}" class="view-button" target="_blank">
-                                        Book Now
-                                    </a>` :
-                                    `<button onclick="viewProperty('${property.locationId}')" class="view-button">
-                                        View Details
-                                    </button>`
-                                }
-                            </div>
+            propertiesDiv.innerHTML = data.properties.map(property => `
+                <div class="property-card">
+                    <div class="property-image" style="background-image: url('${property.image_url || './images/placeholder.jpg'}')"></div>
+                    <div class="property-details">
+                        <h3>${property.title}</h3>
+                        <div class="features">
+                            ${property.features.filter(feature => feature).map(feature => 
+                                `<span class="feature">${feature}</span>`
+                            ).join('')}
                         </div>
-                    `).join('')}
+                        <div class="price">
+                            <span class="amount">${property.price}</span>
+                        </div>
+                        <div class="property-location">
+                            <i class="fas fa-map-marker-alt"></i> ${property.location || 'Location not specified'}
+                        </div>
+                        ${property.booking_url ? 
+                            `<a href="${property.booking_url}" class="view-button" target="_blank">
+                                Book Now
+                            </a>` :
+                            `<button onclick="viewProperty('${property.locationId}')" class="view-button">
+                                View Details
+                            </button>`
+                        }
+                    </div>
                 </div>
-            `;
+            `).join('');
         }
 
         function viewProperty(propertyId) {

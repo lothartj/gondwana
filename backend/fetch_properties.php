@@ -16,19 +16,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
+// Required environment variables
+$required_env_vars = [
+    'GONDWANA_API_URL',
+    'GONDWANA_ORIGIN',
+    'GONDWANA_REFERER'
+];
+
 try {
+    // Get environment variables from multiple sources
+    foreach ($required_env_vars as $var) {
+        // Try all possible sources
+        $value = $_ENV[$var] ?? getenv($var) ?? $_SERVER[$var] ?? null;
+        
+        if (empty($value)) {
+            throw new Exception("Required environment variable {$var} is not set or empty");
+        }
+        
+        // Store in $_ENV for consistent access
+        $_ENV[$var] = $value;
+    }
+    
+    $api_url = $_ENV['GONDWANA_API_URL'];
+    $origin = $_ENV['GONDWANA_ORIGIN'];
+    $referer = $_ENV['GONDWANA_REFERER'];
+    
     // Initialize cURL
     $ch = curl_init();
     curl_setopt_array($ch, [
-        CURLOPT_URL => 'https://gondwana-collection.com/_hcms/api/disco/updatePropertiesBasedOnFilter',
+        CURLOPT_URL => $api_url,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_SSL_VERIFYPEER => false,
         CURLOPT_HTTPGET => true,
         CURLOPT_HTTPHEADER => [
             'Accept: application/json',
-            'Origin: https://gondwana-collection.com',
-            'Referer: https://gondwana-collection.com/',
+            'Origin: ' . $origin,
+            'Referer: ' . $referer,
             'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         ]
     ]);
@@ -105,6 +129,19 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => $e->getMessage()
+        'error' => $e->getMessage(),
+        'debug_info' => [
+            'env_vars_status' => array_map(function($var) {
+                return [
+                    'name' => $var,
+                    'env' => $_ENV[$var] ?? null,
+                    'getenv' => getenv($var),
+                    'server' => $_SERVER[$var] ?? null,
+                    'docker_env' => getenv($var, true) // true = local only
+                ];
+            }, $required_env_vars),
+            'php_version' => PHP_VERSION,
+            'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'unknown'
+        ]
     ]);
 } 

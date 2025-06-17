@@ -1,4 +1,3 @@
-Access Site here:
 [![Live Demo on Render](https://img.shields.io/badge/Live%20Demo-Render-blue?logo=render&style=for-the-badge)](https://gondwana.onrender.com/frontend/index.html)
 
 # Gondwana Collection Booking System
